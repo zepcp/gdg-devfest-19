@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Ballot front-end</title>
+    <form>
+      Sign Your Vote<br>
+      Proposal: <input type="text" name="proposal" id="p"><br>
+      Proposals:<br>
+      <input type="checkbox" name="proposal1" value="proposal1"> Proposal Number 1<br>
+      <input type="checkbox" name="proposal2" value="proposal2"> Proposal Number 2<br>
+
+      <button onclick="voteInFavor()">Vote In Favor</button>
+      <button onclick="voteAgainst()">Vote Against</button>
+    </form>
+    <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script language="javascript" type="text/javascript" src="http://localhost:5000/zomic/web3.js"></script>
+    <script language="javascript" type="text/javascript" src="http://localhost:5000/zomic/ballot_abi.js"></script>
+    <script type="text/javascript">
+      if(typeof window.web3 !== "undefined" && typeof window.web3.currentProvider !== "undefined") {
+        var web3 = new Web3(window.web3.currentProvider);
+        //var web3 = new Web3(new Web3.providers.WebsocketProvider("wss://ropsten.infura.io/ws"));
+        //var web3 = new Web3(new Web3.providers.WebsocketProvider("localhost:8545"));
+      } else {
+        var web3 = new Web3();
+      }
+    </script>
+  </head>
+  <body>
+
+    <script>
+      var ballot;
+      var userAccount;
+
+      function startApp() {
+        var ballotAddress = "0x51EC36f097b0bB78cab445d7FCD382e85EEbb4Dd";
+        console.log(web3.version.api)
+        console.log(web3.eth.accounts[0])
+        ballot = new web3.eth.Contract(ballotABI, ballotAddress);
+
+        var accountInterval = setInterval(function() {
+
+          if (web3.eth.accounts[0] !== userAccount) {
+            userAccount = web3.eth.accounts[0];
+
+            checkEligibility(userAccount);
+          }
+        }, 100);
+      }
+
+      function getOwner() {
+        return ballot.methods.owner().call()
+      }
+
+      function checkEligibility(address) {
+        return ballot.methods.eligible(address).call()
+      }
+
+      function getVotesInFavor(proposal) {
+        return ballot.methods.votesInFavor(proposal).call()
+      }
+
+      function getVotesAgainst(proposal) {
+        return ballot.methods.votesAgainst(proposal).call()
+      }
+
+      window.addEventListener('load', function() {
+
+        //if (typeof web3 !== 'undefined') {
+        //  web3 = new Web3(web3.currentProvider);
+        //} else {
+        //
+        //}
+
+        startApp()
+
+      })
+    </script>
+  </body>
+</html>
