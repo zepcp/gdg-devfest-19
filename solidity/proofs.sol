@@ -4,6 +4,7 @@ contract BallotProof {
     address public owner;
 
     mapping(string => bytes) public proofHash;
+    mapping(string => bool) public passed;
     mapping(string => uint) public votesInFavor;
     mapping(string => uint) public votesAgainst;
 
@@ -36,9 +37,10 @@ contract BallotProof {
         owner = _newOwner;
     }
 
-    function propose(string memory _name, bool _passed, uint _inFavor, uint _against, bytes _proof) public onlyOwner() {
+    function submitProposal(string memory _name, bool _passed, uint _inFavor, uint _against, bytes _proof) public onlyOwner() {
         require(votesInFavor[_name] == 0);
         require(votesAgainst[_name] == 0);
+        passed[_name] = _passed;
         votesInFavor[_name] = _inFavor;
         votesAgainst[_name] = _against;
         proofHash[_name] = _proof;
