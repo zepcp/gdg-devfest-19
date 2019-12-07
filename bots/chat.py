@@ -70,9 +70,8 @@ def parse_message(user, text):
 
 if __name__ == "__main__":
     last_msg = last_msg()
-    update_id = 0
     while True:
-        for msg in ZOMIC.get(update_id):
+        for msg in ZOMIC.get(last_msg):
             if msg["update_id"] <= last_msg:
                 continue
 
@@ -82,10 +81,8 @@ if __name__ == "__main__":
                 message = msg["edited_message"]
 
             try:
-                print(message["from"]["id"], message["text"])
                 parse_message(message["from"]["id"], message["text"])
             except KeyError:
-                print('errr')
                 continue
             last_msg = msg["update_id"]
 
