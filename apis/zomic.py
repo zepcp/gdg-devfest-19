@@ -1,6 +1,6 @@
 from flask import send_file
 from flask_restplus import Namespace, Resource, abort
-from parsers import parsers
+from parsers import parsers, types
 from db_queries import queries
 import models
 import peewee
@@ -143,8 +143,16 @@ class SubscribeNewsletter(Resource):
     @api.response(201, "Success")
     @api.response(404, "Email does not exist")
     @api.response(409, "Voter already subscribed")
+    @api.response(409, "Input is not an email")
     def post(self, email):
         """Subscribe to Newsletter"""
+
+        try:
+            types.email(email)
+
+        except ValueError:
+            abort(code=409, error="ERROR-409", status=None,
+                  message="Wrong Input: not an email")
 
         try:
             models.Voter.get(models.Voter.email == email)
@@ -156,7 +164,7 @@ class SubscribeNewsletter(Resource):
         try:
             models.NewsletterEmail.get(models.NewsletterEmail.email == email)
 
-            abort(code=404, error="ERROR-409", status=None,
+            abort(code=409, error="ERROR-409", status=None,
                   message="Voter already subscribed subscribed")
 
         except peewee.DoesNotExist:
@@ -170,8 +178,16 @@ class UnsubscribeNewsletter(Resource):
     @api.response(201, "Success")
     @api.response(404, "Email does not exist")
     @api.response(409, "Voter not subscribed")
+    @api.response(409, "Input is not an email")
     def post(self, email):
         """Unsubscribe to Newsletter"""
+
+        try:
+            types.email(email)
+
+        except ValueError:
+            abort(code=409, error="ERROR-409", status=None,
+                  message="Wrong Input: not an email")
 
         try:
             models.Voter.get(models.Voter.email == email)
@@ -188,5 +204,5 @@ class UnsubscribeNewsletter(Resource):
             return {'status': 'OK', 'message': "Successfully Unsubscribed"}, 201
 
         except peewee.DoesNotExist:
-            abort(code=404, error="ERROR-409", status=None,
+            abort(code=409, error="ERROR-409", status=None,
                   message="Voter is not subscribed")
