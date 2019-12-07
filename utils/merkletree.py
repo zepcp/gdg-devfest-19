@@ -1,9 +1,8 @@
 import functools
-
 from sha3 import keccak_256
 
 import models
-
+from utils import types
 
 def compute(hash_list):
     while True:
@@ -30,4 +29,7 @@ def get_submission_info(proposal_id):
         else:
             against += 1
     passed = True if in_favor > against else False
-    return passed, in_favor, against, compute(hash_list)
+    if hash_list:
+        return passed, in_favor, against, compute(hash_list)
+    else:
+        return passed, in_favor, against, types.string_to_bytes("NO_VOTES")

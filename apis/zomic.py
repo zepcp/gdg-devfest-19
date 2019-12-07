@@ -331,7 +331,7 @@ class ForceEnd(Resource):
         txid = submit_proposal(args.id, passed, in_favor, against, proof)
         models.Proposals.update(status=result,
                                 in_favor=in_favor,
-                                againt=against,
+                                against=against,
                                 txid=txid
                                 ).where(models.Proposals.id == args.id).execute()
         send_result(args.id, result, in_favor, against, txid)

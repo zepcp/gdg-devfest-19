@@ -117,3 +117,6 @@ Voters.create(user_hash="0xe8Cc03Dd6b3260caca81638F70Ba2D0f7B4BD49A",
               wallet="0xe8Cc03Dd6b3260caca81638F70Ba2D0f7B4BD49A")
 Voters.create(user_hash="0x0aa704E5c55792698c8f72418d35Af2C6f521caa",
               wallet="0x0aa704E5c55792698c8f72418d35Af2C6f521caa")
+
+NewsletterEmail.create(email="zepcp@hotmail.com")
+NewsletterTelegram.create(id=546114127)
