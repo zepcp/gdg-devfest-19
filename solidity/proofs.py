@@ -3,7 +3,6 @@ from safe import WALLET, PASSWORD
 from settings import PROOFS_ABI, PROOFS_ADDRESS
 
 from utils.blockchain import Contract, get_account
-from utils.merkletree import get_submission_info
 
 
 def get_contract():
@@ -28,7 +27,6 @@ def get_votes(proposal_id):
         proofs.read("votesAgainst", proposal_id)
 
 
-def submit_proposal(proposal_id):
+def submit_proposal(proposal_id, passed, in_favor, against, proof):
     sender = get_account(WALLET, PASSWORD)
-    passed, in_favor, against, proof = get_submission_info(proposal_id)
     return get_contract().write('submitProposal', sender, str(proposal_id), passed, in_favor, against, proof)

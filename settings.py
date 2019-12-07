@@ -30,5 +30,8 @@ DATE = "%Y-%m-%d"
 TIMESTAMP = "%Y-%m-%d %H:%M:%S"
 ISO_TIMESTAMP = "%Y-%m-%dT%H:%M:%S.%f"
 
-TOPICS = ["Ambiente", "Educação", "Saúde"]
-STATUS = ["Aberta", "Aprovada", "Rejeitada"]
+TOPICS = ["FakeNews", "InfoExclusão", "Cidadania", "Transparência"]
+OPEN = "Aberta"
+APPROVED = "Aprovada"
+REJECTED = "Rejeitada"
+STATUS = [OPEN, APPROVED, REJECTED]

@@ -8,8 +8,9 @@ from parsers import parsers
 from utils.types import datetime_to_string, datetime_to_unixtimestamp, unixtimestamp_to_datetime
 from utils.blockchain import verify, checksum, get_account, sign
 from safe import WALLET, PASSWORD
-from bots.newsletter import send_proposal
+from bots.newsletter import send_proposal, send_result
 from solidity.proofs import submit_proposal
+from utils.merkletree import get_submission_info
 
 api = Namespace("zomic", description="Zomic API")
 
@@ -37,7 +38,6 @@ class SubscribeNewsletter(Resource):
 
             abort(code=409, error="ERROR-409", status=None,
                   message="Email already subscribed")
-
         except peewee.DoesNotExist:
             models.NewsletterEmail.create(email=args.email)
 
@@ -51,17 +51,15 @@ class UnsubscribeNewsletter(Resource):
     @api.response(400, "Wrong Input: not an email")
     @api.response(409, "Email already subscribed")
     def post(self):
-        """Unsubscribe to Newsletter"""
+        """Unsubscribe from Newsletter"""
         parser = parsers.parse_newsletter()
         args = parser.parse_args()
 
         try:
             subscription = models.NewsletterEmail.get(models.NewsletterEmail.email == args.email)
-
             subscription.delete_instance()
 
             return {'status': 'OK', 'message': "Successfully Unsubscribed"}, 201
-
         except peewee.DoesNotExist:
             abort(code=409, error="ERROR-409", status=None,
                   message="Email is not subscribed")
@@ -73,7 +71,9 @@ class ProposalInsert(Resource):
     @api.response(400, "Bad request")
     @api.response(401, "Unauthorized")
     def post(self):
-        args = parsers.parser_proposal_post().parse_args()
+        """Insert New Proposal"""
+        parser = parsers.add_voter()
+        args = parser.parse_args()
 
         if args.deadline < datetime.utcnow():
             abort(code=400, error="ERROR-400", status=None,
@@ -84,11 +84,9 @@ class ProposalInsert(Resource):
                                     title=args.title,
                                     topic=args.topic,
                                     description=args.description,
-                                    status="Aberta",
                                     wallet=args.wallet)
 
             send_proposal(models.Proposals.get(models.Proposals.title == args.title).id)
-
         except:
             models.db.close()
             abort(code=409, error="ERROR-409", status=None,
@@ -103,6 +101,7 @@ class ProposalDetails(Resource):
     @api.response(400, "Bad request")
     @api.response(401, "Unauthorized")
     def get(self):
+        """Get Proposal Details"""
         try:
             args = parsers.parser_proposal_get().parse_args()
             proposal = models.Proposals.get(models.Proposals.id == args.id)
@@ -113,8 +112,44 @@ class ProposalDetails(Resource):
                 "wallet": proposal.wallet,
                 "status": proposal.status,
                 "deadline": datetime_to_string(proposal.deadline, settings.TIMESTAMP),
-                "topic": proposal.topic
-            }, 200
+                "topic": proposal.topic,
+                "in_favor": proposal.in_favor,
+                "against": proposal.against,
+                "txid": proposal.txid
+                }, 200
+        except peewee.DoesNotExist:
+            abort(code=409, error="ERROR-409", status=None,
+                  message="Proposal Does Not Exist")
+
+
+@api.route("/proposal/votes")
+class ProposalVotes(Resource):
+    @api.expect(parsers.parser_proposal_get())
+    @api.response(400, "Bad request")
+    @api.response(401, "Unauthorized")
+    def get(self):
+        """Get Proposal Votes"""
+        try:
+            parser = parsers.add_voter()
+            args = parser.parse_args()
+            try:
+                models.Proposals.get(models.Proposals.id == args.id)
+            except peewee.DoesNotExist:
+                abort(code=409, error="ERROR-409", status=None,
+                      message="Votation Not Close Yet Or Proposal Does Not Exist")
+
+            response = []
+            for vote in models.Votes.select(models.Votes.proposal_id == args.id).execute():
+                response.append({
+                    "user_hash": vote.user_hash,
+                    "wallet": vote.wallet,
+                    "signature": vote.signature,
+                    "proposal_id": vote.proposal_id,
+                    "in_favor": vote.in_favor,
+                    "timestamp": vote.timestamp
+                })
+
+                return response, 200
 
         except peewee.DoesNotExist:
             abort(code=409, error="ERROR-409", status=None,
@@ -126,10 +161,9 @@ class ProposalListAll(Resource):
     @api.response(400, "Bad request")
     @api.response(401, "Unauthorized")
     def get(self):
-        proposals = models.Proposals.select().execute()
-
+        """List All Proposals"""
         response = []
-        for proposal in proposals:
+        for proposal in models.Proposals.select().execute():
             response.append({
                 "id": proposal.id,
                 "title": proposal.title,
@@ -137,7 +171,10 @@ class ProposalListAll(Resource):
                 "wallet": proposal.wallet,
                 "status": proposal.status,
                 "deadline": datetime_to_string(proposal.deadline, settings.TIMESTAMP),
-                "topic": proposal.topic
+                "topic": proposal.topic,
+                "in_favor": proposal.in_favor,
+                "against": proposal.against,
+                "txid": proposal.txid
             })
 
         return response, 200
@@ -150,13 +187,12 @@ class AddVoter(Resource):
     @api.response(409, "Voter already exists")
     def post(self):
         """Add New Voter"""
-
         parser = parsers.add_voter()
         args = parser.parse_args()
 
         try:
             models.Voters.create(user_hash=args.user_hash, wallet=args.wallet,
-                                telegram_id=args.telegram_id, email=args.email)
+                                 telegram_id=args.telegram_id, email=args.email)
 
             return {'status': 'OK', "message": "Voter Successfully Added"}, 201
         except:
@@ -177,11 +213,9 @@ class AddVoter(Resource):
 
         try:
             subscription = models.Voters.get(models.Voters.user_hash == args.user_hash)
-
             subscription.delete_instance()
 
             return {'status': 'OK', 'message': "Voter Successfully Deleted"}, 201
-
         except peewee.DoesNotExist:
             abort(code=409, error="ERROR-409", status=None,
                   message="Voter already deleted")
@@ -227,7 +261,7 @@ class Vote(Resource):
     @api.response(409, "User Already Voted")
     @api.response(409, "Timestamp Cant Be In The Future")
     def post(self):
-        """Add New Vote"""
+        """Insert A Vote"""
         parser = parsers.post_vote()
         args = parser.parse_args()
 
@@ -277,7 +311,7 @@ class Vote(Resource):
                 "message": "Vote Successfully Submitted"}, 201
 
 
-@api.route("/proposal/force_end")
+@api.route("/test/force_end")
 class ForceEnd(Resource):
     @api.expect(parsers.parser_proposal_get())
     @api.response(400, "Bad request")
@@ -286,6 +320,18 @@ class ForceEnd(Resource):
         """Debug Feature Only"""
         args = parsers.parser_proposal_get().parse_args()
         try:
-            models.Proposals.get(models.Proposals.id == args.id)
+            proposal = models.Proposals.get(models.Proposals.id == args.id)
         except peewee.DoesNotExist:
-            return {'txid': submit_proposal(args.id)}
+            abort(code=404, error="ERROR-404", status=None,
+                  message="Proposal Not Found")
+
+        passed, in_favor, against, proof = get_submission_info(args.id)
+        result = settings.APPROVED if passed else settings.REJECTED
+        txid = submit_proposal(args.id, passed, in_favor, against, proof)
+        models.Proposals.update(status=result,
+                                in_favor=in_favor,
+                                againt=against,
+                                txid=txid
+                                ).where(models.Proposals.id == args.id).execute()
+        send_result(args.id, result, in_favor, against, txid)
+        return {'txid': txid}

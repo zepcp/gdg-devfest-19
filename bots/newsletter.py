@@ -27,3 +27,20 @@ def send_proposal(proposta_id):
     for telegram_id in telegram_list:
         send_by_telegram(subject, message, telegram_id)
     return
+
+
+def send_result(proposta_id, result, in_favor, against, txid):
+    subject = "Proposta - " + str(proposta_id) + ": " + result
+    message = "Votos a Favor: {}\nVotos Contra: {}\nTxid: {}".format(str(in_favor),
+                                                                     str(against),
+                                                                     txid)
+
+    mail_list = models.NewsletterEmail.select().where().execute()
+    telegram_list = models.NewsletterTelegram.select().where().execute()
+
+    for to_address in mail_list:
+        send_by_mail(subject, message, to_address)
+
+    for telegram_id in telegram_list:
+        send_by_telegram(subject, message, telegram_id)
+    return
