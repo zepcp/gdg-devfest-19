@@ -6,7 +6,8 @@ import models
 import settings
 from parsers import parsers, types
 from utils.types import datetime_to_string, datetime_to_unixtimestamp, unixtimestamp_to_datetime
-from utils.blockchain import verify, checksum
+from utils.blockchain import verify, checksum, get_account, sign
+from safe import WALLET, PASSWORD
 
 api = Namespace("zomic", description="Zomic API")
 
@@ -265,4 +266,8 @@ class Vote(Resource):
                             in_favor=True if args.in_favor == "YES" else False,
                             timestamp=args.timestamp)
 
-        return {'status': 'OK', "message": "Vote Successfully Submitted"}, 201
+        receipt = sign(get_account(WALLET, PASSWORD), str(vote))
+
+        return {"validator": WALLET,
+                "receipt": receipt,
+                "message": "Vote Successfully Submitted"}, 201
