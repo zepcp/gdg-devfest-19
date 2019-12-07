@@ -1,6 +1,6 @@
 import time
 
-from bots.telegram import Bot
+from utils.telegram import Bot
 from settings import OFFSET, TELEGRAM_SLEEP
 
 ZOMIC = Bot()

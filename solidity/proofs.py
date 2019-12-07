@@ -31,4 +31,4 @@ def get_votes(proposal_id):
 def submit_proposal(proposal_id):
     sender = get_account(WALLET, PASSWORD)
     passed, in_favor, against, proof = get_submission_info(proposal_id)
-    return get_contract().write('submitProposal', sender, proposal_id, passed, in_favor, against, proof)
+    return get_contract().write('submitProposal', sender, str(proposal_id), passed, in_favor, against, proof)

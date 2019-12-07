@@ -1,13 +1,23 @@
 import argparse
-from utils.blockchain import Contract, get_account, decrypt_keystore, read_keystore, sign, verify
-from utils.types import string_to_bytes, string_to_unixtimestamp
-from settings import BALLOT_ADDRESS, BALLOT_ABI, DATE, PROOFS_ABI, PROOFS_BYTECODE, PROOFS_ADDRESS
+from utils.blockchain import Contract, get_account, sign, verify
+from settings import BALLOT_ADDRESS, BALLOT_ABI, PROOFS_ABI, PROOFS_ADDRESS
+
+from utils.telegram import Bot
+from utils.mail import Mail
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--wallet", '-w', type=str, help="Wallet Address")
     parser.add_argument("--password", '-p', type=str, help="Password to unlock your keystore")
     args = parser.parse_args()
+
+    #subject = "Test Email"
+    #message = "Test Message"
+    #to_address = "zepcp@hotmail.com"
+    #Mail(SMTP_HOST, SMTP_USER, SMTP_PASS).send_mail(subject, message, to_address)
+
+    #Bot().send(546114127, "text")
+    exit()
 
     # proofs = Contract(PROOFS_ABI).deploy(get_account(args.wallet,args.password), PROOFS_BYTECODE)
 

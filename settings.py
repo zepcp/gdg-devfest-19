@@ -25,11 +25,6 @@ PROOFS_ABI = "solidity/proofs.abi"
 PROOFS_BYTECODE = "solidity/proofs.bytecode"
 PROOFS_ADDRESS = "0xE7389300c701EF4a833fA335D4228244F0fb23E8"
 
-# Mail [Utils]
-SMTP_HOST = None
-SMTP_USER = None
-SMTP_PASS = None
-
 # Types [Utils]
 DATE = "%Y-%m-%d"
 TIMESTAMP = "%Y-%m-%d %H:%M:%S"
