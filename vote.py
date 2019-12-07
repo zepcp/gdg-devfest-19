@@ -4,6 +4,9 @@ from settings import DATE
 
 from utils.types import string_to_unixtimestamp
 
+"""
+python3 -m vote -w "0x64767925a6df9e1ac8718ade7b347ea0eb9f9d46" -p "test" -l 1 -v "YES"
+"""
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -19,9 +22,10 @@ if __name__ == '__main__':
     vote = {"proposal": args.proposal,
             "wallet": checksum(args.wallet),
             "vote": args.vote,
-            "timestamp": string_to_unixtimestamp("2019-12-07", DATE)}
+            "timestamp": string_to_unixtimestamp(args.timestamp, DATE)}
 
     signature = sign(sender, str(vote))
     verified = verify(sender.address, str(vote), signature)
 
     print(signature)
+    print(string_to_unixtimestamp(args.timestamp, DATE))

@@ -46,7 +46,7 @@ class Proposals(BaseModel):
     status = peewee.CharField(max_length=TITLE_LENGTH, default=settings.OPEN)
     wallet = peewee.CharField(max_length=WALLET_LENGTH, null=True)
     in_favor = peewee.IntegerField(null=True)
-    againt = peewee.IntegerField(null=True)
+    against = peewee.IntegerField(null=True)
     txid = peewee.CharField(max_length=TRANSACTION_LENGTH, null=True)
 
     class Meta:

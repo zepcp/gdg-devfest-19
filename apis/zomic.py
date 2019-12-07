@@ -130,10 +130,11 @@ class ProposalVotes(Resource):
     def get(self):
         """Get Proposal Votes"""
         try:
-            parser = parsers.add_voter()
+            parser = parsers.parser_proposal_get()
             args = parser.parse_args()
             try:
-                models.Proposals.get(models.Proposals.id == args.id)
+                models.Proposals.get(models.Proposals.id == args.id,
+                                     models.Proposals.status != settings.OPEN)
             except peewee.DoesNotExist:
                 abort(code=409, error="ERROR-409", status=None,
                       message="Votation Not Close Yet Or Proposal Does Not Exist")
@@ -292,17 +293,17 @@ class Vote(Resource):
                   message="User Not Found")
 
         try:
-            models.Votes.get(models.Votes.user_hash == voter.user_hash)
-        except peewee.DoesNotExist:
+            models.Votes.get(models.Votes.user_hash == voter.user_hash,
+                             models.Votes.proposal_id == args.proposal_id)
             abort(code=409, error="ERROR-409", status=None,
                   message="User Already Voted")
-
-        models.Votes.create(proposal_id=args.proposal_id,
-                            user_hash=voter.user_hash,
-                            wallet=args.wallet,
-                            signature=args.signature,
-                            in_favor=True if args.in_favor == "YES" else False,
-                            timestamp=args.timestamp)
+        except peewee.DoesNotExist:
+            models.Votes.create(proposal_id=args.proposal_id,
+                                user_hash=voter.user_hash,
+                                wallet=args.wallet,
+                                signature=args.signature,
+                                in_favor=True if args.in_favor == "YES" else False,
+                                timestamp=args.timestamp)
 
         receipt = sign(get_account(WALLET, PASSWORD), str(vote))
 
