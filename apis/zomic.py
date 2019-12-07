@@ -57,6 +57,38 @@ class Page(Resource):
         return send_file("/Users/josepereira/documents/gdg-devfest-19/web3.min.js")
 
 
+@api.route("/vote")
+class Vote(Resource):
+    @api.expect(parsers.post_vote())
+    @api.response(201, "Success")
+    @api.response(404, "Wallet does not exist")
+    @api.response(404, "Proposal ID does not exist")
+    def post(self):
+        """Add New Vote"""
+
+        parser = parsers.post_vote()
+        args = parser.parse_args()
+
+        try:
+            models.Proposals.get(models.Proposals.id == args.proposal_id)
+
+        except peewee.DoesNotExist:
+            abort(code=404, error="ERROR-404", status=None,
+                  message="The provided proposal ID does not exist")
+        try:
+            voter = models.Voter.get(models.Voter.wallet == args.wallet)
+
+            models.Votes.create(wallet=args.wallet, proposal_id=args.proposal_id,
+                                signature=args.signature, in_favor=args.in_favor,
+                                nif=voter.nif)
+
+            return {'status': 'OK', 'message': "Vote Successfully Submitted"}, 201
+
+        except peewee.DoesNotExist:
+            abort(code=404, error="ERROR-404", status=None,
+                  message="The provided wallet does not exist")
+
+
 @api.route("/new_voter")
 class AddVoter(Resource):
     @api.expect(parsers.post_new_voter())

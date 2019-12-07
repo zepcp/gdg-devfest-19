@@ -2,6 +2,36 @@ from flask_restplus import reqparse
 from parsers import types
 
 
+def post_vote():
+    parser = reqparse.RequestParser()
+    parser.add_argument(
+        "proposal_id",
+        type=str.upper,
+        required=True,
+        help="Proposal ID"
+    )
+    parser.add_argument(
+        "wallet",
+        type=str.upper,
+        required=True,
+        help="Voter Wallet"
+    )
+    parser.add_argument(
+        "signature",
+        type=str.upper,
+        required=True,
+        help="Voter Signed Vote"
+    )
+    parser.add_argument(
+        "in_favor",
+        choices=['YES', 'NO'],
+        required=True,
+        help="Voter Vote"
+    )
+
+    return parser
+
+
 def post_new_voter():
     parser = reqparse.RequestParser()
     parser.add_argument(
@@ -24,7 +54,7 @@ def post_new_voter():
     )
     parser.add_argument(
         "email",
-        type=str.upper,
+        type=types.email,
         required=False,
         help="Voter Email"
     )

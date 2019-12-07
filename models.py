@@ -65,6 +65,7 @@ class Votes(BaseModel):
     proposal_id = peewee.IntegerField()
     in_favor = peewee.BooleanField()
     txid = peewee.CharField(max_length=TRANSACTION_LENGTH, null=True)
+    nif = peewee.CharField(max_length=NIF_LENGTH, unique=True)
 
     class Meta:
         db_table = "votes"
