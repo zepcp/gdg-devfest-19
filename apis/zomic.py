@@ -136,3 +136,57 @@ class ChangeWallet(Resource):
         except peewee.DoesNotExist:
             abort(code=404, error="ERROR-404", status=None,
                   message="No voter found for the provided encrypted identification")
+
+
+@api.route("/subscribe/<path:email>")
+class SubscribeNewsletter(Resource):
+    @api.response(201, "Success")
+    @api.response(404, "Email does not exist")
+    @api.response(409, "Voter already subscribed")
+    def post(self, email):
+        """Subscribe to Newsletter"""
+
+        try:
+            models.Voter.get(models.Voter.email == email)
+
+        except peewee.DoesNotExist:
+            abort(code=404, error="ERROR-404", status=None,
+                  message="Voter with the specified email not found")
+
+        try:
+            models.NewsletterEmail.get(models.NewsletterEmail.email == email)
+
+            abort(code=404, error="ERROR-409", status=None,
+                  message="Voter already subscribed subscribed")
+
+        except peewee.DoesNotExist:
+            models.NewsletterEmail.create(email=email)
+
+            return {'status': 'OK', 'message': "Successfully Subscribed"}, 201
+
+
+@api.route("/unsubscribe/<path:email>")
+class UnsubscribeNewsletter(Resource):
+    @api.response(201, "Success")
+    @api.response(404, "Email does not exist")
+    @api.response(409, "Voter not subscribed")
+    def post(self, email):
+        """Unsubscribe to Newsletter"""
+
+        try:
+            models.Voter.get(models.Voter.email == email)
+
+        except peewee.DoesNotExist:
+            abort(code=404, error="ERROR-404", status=None,
+                  message="Voter with the specified email not found")
+
+        try:
+            subscription = models.NewsletterEmail.get(models.NewsletterEmail.email == email)
+
+            subscription.delete_instance()
+
+            return {'status': 'OK', 'message': "Successfully Unsubscribed"}, 201
+
+        except peewee.DoesNotExist:
+            abort(code=404, error="ERROR-409", status=None,
+                  message="Voter is not subscribed")
