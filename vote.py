@@ -5,7 +5,10 @@ from settings import DATE
 from utils.types import string_to_unixtimestamp
 
 """
-python3 -m vote -w "0x64767925a6df9e1ac8718ade7b347ea0eb9f9d46" -p "test" -l 1 -v "YES"
+python3 -m vote -w "0x64767925a6df9e1ac8718ade7b347ea0eb9f9d46" -p "test" -l 1
+python3 -m vote -w "0x8fa6967433b76a50e0653910798b0c3d7e96f4b4" -p "test" -l 1
+python3 -m vote -w "0xe8Cc03Dd6b3260caca81638F70Ba2D0f7B4BD49A" -p "test" -l 1
+python3 -m vote -w "0x0aa704E5c55792698c8f72418d35Af2C6f521caa" -p "test" -l 1
 """
 
 if __name__ == '__main__':
@@ -28,4 +31,4 @@ if __name__ == '__main__':
     verified = verify(sender.address, str(vote), signature)
 
     print(signature)
-    print(string_to_unixtimestamp(args.timestamp, DATE))
+    print(str(vote))

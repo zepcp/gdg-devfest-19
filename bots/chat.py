@@ -12,15 +12,15 @@ START = """Olá! Sou o ZomicBot, estou aqui para te ajudar a participar na tua c
 Consigo-te ajudar com estas opções:
 /subscrever_newsletter
 /cancelar_subscricao
-/id_propostas
-/info_proposta <ID>
+/propostas
+/info_proposta_ID
 /ajuda"""
 SUBSCRIBED = "Registado! Irás receber updates da comunidade"
 UNSUBSCRIBED = "Registado! Vais deixar de receber updates da comunidade"
 ALREADY_SUBSCRIBED = "Já estava registado! Estás a receber updates da comunidade"
 ALREADY_UNSUBSCRIBED = "Já estava Registado! Não estás a receber updates da comunidade"
 HELP = "Envia a tua questão para {}, tentarei responder assim que possível".format(SMTP_USER)
-NO_PROPOSAL = "Não conheço essa proposta, tens a certeza que já foi submetida?"
+NO_PROPOSAL = "Não conheço o ID dessa proposta, tens a certeza que já foi submetida?"
 UNKNOWN = "Olá, não reconheço esse comando, tenta /start ou /ajuda para mais informação"
 
 
@@ -44,20 +44,22 @@ def parse_message(user, text):
         models.NewsletterTelegram.delete().where(models.NewsletterTelegram.id == user).execute()
         ZOMIC.send(user, text=UNSUBSCRIBED)
 
-    elif text == "/id_propostas":
+    elif text == "/propostas":
         proposals = models.Proposals.select().execute()
         response = ""
         for proposal in proposals:
-            response += str(proposal.id) + "\n"
+            response += "/info_proposta_" + str(proposal.id) + "\n"
         ZOMIC.send(user, text=response)
 
-    elif "/info_proposta" in text:
+    elif "/info_proposta_" in text:
         try:
-            proposal_id = int(text.split(" ")[1])
+            proposal_id = int(text.split("_")[2])
             proposal = models.Proposals.get(models.Proposals.id == proposal_id)
 
-            ZOMIC.send(user, text="Deadline: "+str(proposal.deadline))
-            ZOMIC.send(user, text="Description: "+proposal.description)
+            ZOMIC.send(user, text="Titulo: "+str(proposal.title))
+            ZOMIC.send(user, text="Tópico: "+str(proposal.topic))
+            ZOMIC.send(user, text="Deadline: "+str(proposal.deadline)[:10])
+            ZOMIC.send(user, text="Descrição: "+proposal.description)
         except (ValueError, IndexError):
             ZOMIC.send(user, text=NO_PROPOSAL)
 
