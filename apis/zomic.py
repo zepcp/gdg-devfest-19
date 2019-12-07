@@ -1,7 +1,5 @@
-from flask import send_file
 from flask_restplus import Namespace, Resource, abort
 from parsers import parsers, types
-from db_queries import queries
 import models
 import peewee
 
@@ -47,14 +45,6 @@ class VoterInfo(Resource):
         except peewee.DoesNotExist:
             abort(code=404, error="ERROR-404", status=None,
                   message="No voter found for the provided encrypted identification")
-
-
-@api.route("/ballot/<path:file>")
-class Page(Resource):
-    def get(self, file):
-        """Html Page"""
-
-        return send_file("/Users/josepereira/documents/gdg-devfest-19/web3.min.js")
 
 
 @api.route("/vote")
