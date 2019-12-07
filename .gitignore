@@ -241,3 +241,7 @@ Temporary Items
 
 # Ignore __pycache__ folders
 *__pycache__/
+
+# Ignore Pipfile
+Pipfile
+Pipfile.lock
