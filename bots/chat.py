@@ -37,6 +37,7 @@ def parse_message(user, text):
             models.NewsletterTelegram.create(id=user)
             ZOMIC.send(user, text=SUBSCRIBED)
         except:
+            models.db.close()
             ZOMIC.send(user, text=ALREADY_SUBSCRIBED)
 
     elif text == "/unsubscribe":
@@ -71,9 +72,11 @@ if __name__ == "__main__":
     last_msg = last_msg()
     update_id = 0
     while True:
+        print('HERE')
         for msg in ZOMIC.get(update_id):
             # Msg Already Processed
             if msg["update_id"] <= last_msg:
+                print(msg["message"]['text'])
                 continue
 
             try:
@@ -81,7 +84,9 @@ if __name__ == "__main__":
             except KeyError:
                 message = msg["edited_message"]
 
+            print('HERE')
             try:
+                print(message["from"]["id"], message["text"])
                 parse_message(message["from"]["id"], message["text"])
                 last_msg = msg["update_id"]
             except KeyError:

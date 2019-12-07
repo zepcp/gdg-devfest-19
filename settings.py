@@ -29,3 +29,6 @@ PROOFS_ADDRESS = "0xE7389300c701EF4a833fA335D4228244F0fb23E8"
 DATE = "%Y-%m-%d"
 TIMESTAMP = "%Y-%m-%d %H:%M:%S"
 ISO_TIMESTAMP = "%Y-%m-%dT%H:%M:%S.%f"
+
+TOPICS = ["Ambiente", "Educação", "Saúde"]
+STATUS = ["Aberta", "Aprovada", "Rejeitada"]

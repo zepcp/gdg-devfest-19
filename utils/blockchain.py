@@ -8,6 +8,10 @@ from settings import KEYSTORE_PATH, WEB3_PROVIDER, DEPLOY_GAS_LIMIT,\
 WEB3 = Web3(HTTPProvider(WEB3_PROVIDER))
 
 
+def checksum(wallet):
+    return Web3.toChecksumAddress(wallet)
+
+
 def read_keystore(wallet):
     with open(join(KEYSTORE_PATH, wallet[2:].lower()), "r") as f:
         keystore = f.read()
