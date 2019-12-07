@@ -228,7 +228,7 @@ class ModifyVoter(Resource):
     @api.response(200, "Success")
     @api.response(401, "Unauthorized")
     @api.response(404, "User Not Found")
-    def get(self):
+    def post(self):
         """Modify Voter Information"""
         parser = parsers.modify_voter()
         args = parser.parse_args()

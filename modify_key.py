@@ -1,3 +1,4 @@
+import requests
 import argparse
 from utils.blockchain import get_account, sign, checksum
 
@@ -16,5 +17,16 @@ if __name__ == '__main__':
 
     signature = sign(sender, str(checksum(args.new_wallet)))
 
-    print(signature)
-    print(checksum(args.new_wallet))
+    #print(signature)
+    #print(checksum(args.new_wallet))
+
+
+    res = requests.post("http://localhost:5000/zomic/user/modify_key",
+                        params={
+                            "old_wallet": args.wallet,
+                            "new_wallet": args.new_wallet,
+                            "signature": signature,
+                        })
+
+    print(res.status_code)
+    print(res.json())

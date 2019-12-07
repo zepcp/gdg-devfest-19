@@ -1,3 +1,4 @@
+import requests
 import argparse
 from utils.blockchain import get_account, sign, verify, checksum
 from settings import DATE
@@ -30,5 +31,17 @@ if __name__ == '__main__':
     signature = sign(sender, str(vote))
     verified = verify(sender.address, str(vote), signature)
 
-    print(signature)
-    print(str(vote))
+    #print(signature)
+    #print(str(vote))
+
+    res = requests.post("http://localhost:5000/zomic/user/vote",
+                        params={
+                            "proposal_id": args.proposal,
+                            "wallet": args.wallet,
+                            "signature": signature,
+                            "in_favor": args.vote,
+                            "timestamp": string_to_unixtimestamp(args.timestamp, DATE)
+                        })
+
+    print(res.status_code)
+    print(res.json())
