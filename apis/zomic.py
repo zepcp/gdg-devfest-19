@@ -36,8 +36,6 @@ class VoterInfo(Resource):
         # Check if nif_hash is in the DB and return 404 if not
         # Otherwise return the voter info
 
-        models.db.create_tables([models.Voter], safe=True)
-
         try:
             voter = models.Voter.get(models.Voter.nif == nif)
 
@@ -62,15 +60,13 @@ class Page(Resource):
 @api.route("/new_voter")
 class AddVoter(Resource):
     @api.expect(parsers.post_new_voter())
-    @api.response(200, "Success")
+    @api.response(201, "Success")
     @api.response(409, "Voter already exists")
     def post(self):
         """Add New Voter"""
 
         parser = parsers.post_new_voter()
         args = parser.parse_args()
-
-        models.db.create_tables([models.Voter], safe=True)
 
         try:
             models.Voter.get(models.Voter.nif == args.nif_hash)
@@ -83,4 +79,28 @@ class AddVoter(Resource):
             models.Voter.create(nif=args.nif_hash, wallet=args.wallet,
                                 telegram_id=args.telegram, email=args.email)
 
-            return {"status": "OK"}
+            return {'status': 'OK', "message": "Voter Successfully Added"}, 201
+
+
+@api.route("/change_wallet/<path:nif>/<path:new_wallet>")
+class ChangeWallet(Resource):
+    @api.response(201, "Success")
+    @api.response(404, "Voter does not exist")
+    @api.response(409, "Wallet can not be the same")
+    def post(self, nif, new_wallet):
+        """Change Voter Wallet"""
+
+        try:
+            voter = models.Voter.get(models.Voter.nif == nif)
+
+            if voter.wallet == new_wallet:
+                abort(code=409, error="ERROR-404", status=None,
+                      message="The new wallet must be different from the current one")
+
+            voter.update(wallet=new_wallet).where(voter.nif == nif)
+
+            return {'status': 'OK', 'message': "Wallet successfully replaced"}, 201
+
+        except peewee.DoesNotExist:
+            abort(code=404, error="ERROR-404", status=None,
+                  message="No voter found for the provided encrypted identification")
