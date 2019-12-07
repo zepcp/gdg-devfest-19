@@ -4,6 +4,12 @@ from utils.blockchain import get_account, sign, checksum
 
 """
 python3 -m modify_key -w "0x64767925a6df9e1ac8718ade7b347ea0eb9f9d46" -p "test" -n "0x64767925a6df9e1ac8718ade7b347ea0eb9f9d46"
+
+export MODIFY1="python3 -m modify_key -w 0x64767925a6df9e1ac8718ade7b347ea0eb9f9d46 -p test -n 0x64767925a6df9e1ac8718ade7b347ea0eb9f9d47"
+export MODIFY2="python3 -m modify_key -w 0x8fa6967433b76a50e0653910798b0c3d7e96f4b4 -p test -n 0x8fa6967433b76a50e0653910798b0c3d7e96f4b5"
+export MODIFY3="python3 -m modify_key -w 0xe8Cc03Dd6b3260caca81638F70Ba2D0f7B4BD49A -p test -n 0xe8Cc03Dd6b3260caca81638F70Ba2D0f7B4BD49B"
+export MODIFY4="python3 -m modify_key -w 0x0aa704E5c55792698c8f72418d35Af2C6f521caa -p test -n 0x0aa704E5c55792698c8f72418d35Af2C6f521cab"
+
 """
 
 if __name__ == '__main__':
