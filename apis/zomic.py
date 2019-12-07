@@ -4,10 +4,11 @@ from flask_restplus import Namespace, Resource, abort
 
 import models
 import settings
-from parsers import parsers, types
+from parsers import parsers
 from utils.types import datetime_to_string, datetime_to_unixtimestamp, unixtimestamp_to_datetime
 from utils.blockchain import verify, checksum, get_account, sign
 from safe import WALLET, PASSWORD
+from bots import send_proposal
 
 api = Namespace("zomic", description="Zomic API")
 
@@ -84,6 +85,9 @@ class ProposalInsert(Resource):
                                     description=args.description,
                                     status="Aberta",
                                     wallet=args.wallet)
+
+            send_proposal(models.Proposals.get(models.Proposals.title==args.title).id)
+
         except:
             models.db.close()
             abort(code=409, error="ERROR-409", status=None,
