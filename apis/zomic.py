@@ -8,7 +8,8 @@ from parsers import parsers
 from utils.types import datetime_to_string, datetime_to_unixtimestamp, unixtimestamp_to_datetime
 from utils.blockchain import verify, checksum, get_account, sign
 from safe import WALLET, PASSWORD
-from bots import send_proposal
+from bots.newsletter import send_proposal
+from solidity.proofs import submit_proposal
 
 api = Namespace("zomic", description="Zomic API")
 
@@ -86,7 +87,7 @@ class ProposalInsert(Resource):
                                     status="Aberta",
                                     wallet=args.wallet)
 
-            send_proposal(models.Proposals.get(models.Proposals.title==args.title).id)
+            send_proposal(models.Proposals.get(models.Proposals.title == args.title).id)
 
         except:
             models.db.close()
@@ -104,7 +105,6 @@ class ProposalDetails(Resource):
     def get(self):
         try:
             args = parsers.parser_proposal_get().parse_args()
-
             proposal = models.Proposals.get(models.Proposals.id == args.id)
 
             return {
@@ -275,3 +275,17 @@ class Vote(Resource):
         return {"validator": WALLET,
                 "receipt": receipt,
                 "message": "Vote Successfully Submitted"}, 201
+
+
+@api.route("/proposal/force_end")
+class ForceEnd(Resource):
+    @api.expect(parsers.parser_proposal_get())
+    @api.response(400, "Bad request")
+    @api.response(401, "Unauthorized")
+    def get(self):
+        """Debug Feature Only"""
+        args = parsers.parser_proposal_get().parse_args()
+        try:
+            models.Proposals.get(models.Proposals.id == args.id)
+        except peewee.DoesNotExist:
+            return {'txid': submit_proposal(args.id)}
