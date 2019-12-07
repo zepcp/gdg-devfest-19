@@ -1,7 +1,7 @@
 import argparse
 from utils.blockchain import Contract, get_account, decrypt_keystore, read_keystore, sign, verify
 from utils.types import string_to_bytes, string_to_unixtimestamp
-from settings import BALLOT_ADDRESS, BALLOT_ABI, DATE
+from settings import BALLOT_ADDRESS, BALLOT_ABI, DATE, PROOFS_ABI, PROOFS_BYTECODE, PROOFS_ADDRESS
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -9,7 +9,10 @@ if __name__ == '__main__':
     parser.add_argument("--password", '-p', type=str, help="Password to unlock your keystore")
     args = parser.parse_args()
 
+    # proofs = Contract(PROOFS_ABI).deploy(get_account(args.wallet,args.password), PROOFS_BYTECODE)
+
     ballot = Contract(BALLOT_ABI, BALLOT_ADDRESS)
+    proofs = Contract(PROOFS_ABI, PROOFS_ADDRESS)
 
     # print(ballot.read("owner"))
     # print(ballot.read('eligible', '0x66B655a4CE711F00b570f9801c498071e9A15045'))

@@ -21,6 +21,9 @@ DEFAULT_GAS_LIMIT = 500000
 BALLOT_ABI = "solidity/ballot.abi"
 BALLOT_BYTECODE = "solidity/ballot.bytecode"
 BALLOT_ADDRESS = "0x51EC36f097b0bB78cab445d7FCD382e85EEbb4Dd"  # "0x84563aC8F1b2293ce572fdEf50886e33E1B51Ac8"
+PROOFS_ABI = "solidity/proofs.abi"
+PROOFS_BYTECODE = "solidity/proofs.bytecode"
+PROOFS_ADDRESS = "0xE7389300c701EF4a833fA335D4228244F0fb23E8"
 
 # Mail [Utils]
 SMTP_HOST = None

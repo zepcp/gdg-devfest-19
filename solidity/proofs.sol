@@ -37,7 +37,7 @@ contract BallotProof {
         owner = _newOwner;
     }
 
-    function submitProposal(string memory _name, bool _passed, uint _inFavor, uint _against, bytes _proof) public onlyOwner() {
+    function submitProposal(string memory _name, bool _passed, uint _inFavor, uint _against, bytes memory _proof) public onlyOwner() {
         require(votesInFavor[_name] == 0);
         require(votesAgainst[_name] == 0);
         passed[_name] = _passed;

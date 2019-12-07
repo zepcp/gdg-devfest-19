@@ -2,6 +2,7 @@ from flask import send_file, request
 from flask_restplus import Namespace, Resource, inputs, reqparse
 from parsers import parsers
 from db_queries import queries
+import models
 
 api = Namespace("zomic", description="Zomic API")
 
@@ -16,7 +17,6 @@ class Status(Resource):
 @api.route("/upload")
 class Upload(Resource):
     @api.expect(parsers.get_parser_upload())
-    @api.marshal_with(api, code=201, description="Successfully uploaded")
     @api.response(400, "Bad request")
     @api.response(401, "Unauthorized")
     def post(self):
@@ -38,6 +38,9 @@ class VoterInfo(Resource):
 
         try:
             voter = models.Voter.get(models.Voter.nif == args.nif_hash)
+        except:
+            pass
+        return "", 200
 
 
 @api.route("/ballot/<path:file>")
