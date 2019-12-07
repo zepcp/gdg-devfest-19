@@ -10,15 +10,15 @@ DESCRIPTION_LENGTH = 320
 PROPOSAL_ID_LENGTH = 8
 NIF_LENGTH = 9
 
-# db = peewee.SqliteDatabase(':memory:')
+db = peewee.SqliteDatabase(':memory:')
 
-db = peewee.PostgresqlDatabase(
+'''db = peewee.PostgresqlDatabase(
     "gdg-devfest-19",
     user=settings.DB_USER,
     password=settings.DB_PASSWORD,
     host=settings.DB_HOST,
     port=settings.DB_PORT,
-)
+)'''
 
 
 class BaseModel(peewee.Model):

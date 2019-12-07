@@ -1,8 +1,9 @@
-from flask import send_file, request
-from flask_restplus import Namespace, Resource, inputs, reqparse
+from flask import send_file
+from flask_restplus import Namespace, Resource, abort
 from parsers import parsers
 from db_queries import queries
 import models
+import peewee
 
 api = Namespace("zomic", description="Zomic API")
 
@@ -25,22 +26,29 @@ class Upload(Resource):
         return "", 201
 
 
-@api.route("/voter/<path:hash>")
+@api.route("/voter/<path:nif>/info")
 class VoterInfo(Resource):
-    @api.expect(parsers.get_voter_info_parser())
-    def get(self, file):
+    @api.response(200, "Success")
+    @api.response(404, "Voter does not exist")
+    def get(self, nif):
         """Voter Information"""
-        parser = parsers.get_voter_info_parser()
-        args = parser.parse_args()
 
-        # Check if hash is in the DB and return wrong input if not
+        # Check if nif_hash is in the DB and return 404 if not
         # Otherwise return the voter info
 
+        models.db.create_tables([models.Voter], safe=True)
+
         try:
-            voter = models.Voter.get(models.Voter.nif == args.nif_hash)
-        except:
-            pass
-        return "", 200
+            voter = models.Voter.get(models.Voter.nif == nif)
+
+            return {'nif': nif,
+                    'wallet': voter.wallet,
+                    'telegram': voter.telegram_id,
+                    'email': voter.email}
+
+        except peewee.DoesNotExist:
+            abort(code=404, error="ERROR-404", status=None,
+                  message="No voter found for the provided encrypted identification")
 
 
 @api.route("/ballot/<path:file>")
@@ -53,6 +61,26 @@ class Page(Resource):
 
 @api.route("/new_voter")
 class AddVoter(Resource):
+    @api.expect(parsers.post_new_voter())
+    @api.response(200, "Success")
+    @api.response(409, "Voter already exists")
     def post(self):
-        """Add new_voter"""
-        return {"status": "OK"}
+        """Add New Voter"""
+
+        parser = parsers.post_new_voter()
+        args = parser.parse_args()
+
+        models.db.create_tables([models.Voter], safe=True)
+
+        try:
+            models.Voter.get(models.Voter.nif == args.nif_hash)
+
+            abort(code=409, error="ERROR-409", status=None,
+                  message="The voter with the specified identification already exists")
+
+        except peewee.DoesNotExist:
+
+            models.Voter.create(nif=args.nif_hash, wallet=args.wallet,
+                                telegram_id=args.telegram, email=args.email)
+
+            return {"status": "OK"}
