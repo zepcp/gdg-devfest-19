@@ -222,6 +222,22 @@ class AddVoter(Resource):
                   message="Voter already deleted")
 
 
+@api.route("/voter/listall")
+class VoterListAll(Resource):
+    @api.response(400, "Bad request")
+    @api.response(401, "Unauthorized")
+    def get(self):
+        """List All Voters"""
+        response = []
+        for voter in models.Voters.select().execute():
+            response.append({
+                "user_hash": voter.user_hash,
+                "wallet": voter.wallet
+            })
+
+        return response, 200
+
+
 @api.route("/user/modify_key")
 class ModifyVoter(Resource):
     @api.expect(parsers.modify_voter())
