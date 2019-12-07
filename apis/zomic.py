@@ -131,9 +131,8 @@ class ChangeWallet(Resource):
 @api.route("/subscribe/<path:email>")
 class SubscribeNewsletter(Resource):
     @api.response(201, "Success")
-    @api.response(404, "Email does not exist")
-    @api.response(409, "Voter already subscribed")
-    @api.response(409, "Input is not an email")
+    @api.response(400, "Wrong Input: not an email")
+    @api.response(409, "Email already subscribed")
     def post(self, email):
         """Subscribe to Newsletter"""
 
@@ -141,21 +140,14 @@ class SubscribeNewsletter(Resource):
             types.email(email)
 
         except ValueError:
-            abort(code=409, error="ERROR-409", status=None,
+            abort(code=400, error="ERROR-400", status=None,
                   message="Wrong Input: not an email")
-
-        try:
-            models.Voter.get(models.Voter.email == email)
-
-        except peewee.DoesNotExist:
-            abort(code=404, error="ERROR-404", status=None,
-                  message="Voter with the specified email not found")
 
         try:
             models.NewsletterEmail.get(models.NewsletterEmail.email == email)
 
             abort(code=409, error="ERROR-409", status=None,
-                  message="Voter already subscribed subscribed")
+                  message="Email already subscribed")
 
         except peewee.DoesNotExist:
             models.NewsletterEmail.create(email=email)
@@ -166,9 +158,8 @@ class SubscribeNewsletter(Resource):
 @api.route("/unsubscribe/<path:email>")
 class UnsubscribeNewsletter(Resource):
     @api.response(201, "Success")
-    @api.response(404, "Email does not exist")
-    @api.response(409, "Voter not subscribed")
-    @api.response(409, "Input is not an email")
+    @api.response(400, "Wrong Input: not an email")
+    @api.response(409, "Email is not subscribed")
     def post(self, email):
         """Unsubscribe to Newsletter"""
 
@@ -176,15 +167,8 @@ class UnsubscribeNewsletter(Resource):
             types.email(email)
 
         except ValueError:
-            abort(code=409, error="ERROR-409", status=None,
+            abort(code=400, error="ERROR-400", status=None,
                   message="Wrong Input: not an email")
-
-        try:
-            models.Voter.get(models.Voter.email == email)
-
-        except peewee.DoesNotExist:
-            abort(code=404, error="ERROR-404", status=None,
-                  message="Voter with the specified email not found")
 
         try:
             subscription = models.NewsletterEmail.get(models.NewsletterEmail.email == email)
@@ -195,4 +179,4 @@ class UnsubscribeNewsletter(Resource):
 
         except peewee.DoesNotExist:
             abort(code=409, error="ERROR-409", status=None,
-                  message="Voter is not subscribed")
+                  message="Email is not subscribed")
