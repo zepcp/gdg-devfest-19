@@ -4,6 +4,7 @@ from sha3 import keccak_256
 import models
 from utils import types
 
+
 def compute(hash_list):
     while True:
         hash1 = []

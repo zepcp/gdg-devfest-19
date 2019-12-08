@@ -11,7 +11,7 @@ TITLE_LENGTH = 45
 
 # db = peewee.SqliteDatabase(':memory:')
 db = peewee.PostgresqlDatabase(
-    "gdg-devfest-19",
+    settings.DB_NAME,
     user=settings.DB_USER,
     password=settings.DB_PASSWORD,
     host=settings.DB_HOST,

@@ -1,5 +1,6 @@
 import peewee
 from datetime import datetime
+from flask import send_file
 from flask_restplus import Namespace, Resource, abort
 
 import models
@@ -14,13 +15,49 @@ from utils.merkletree import get_submission_info
 
 api = Namespace("zomic", description="Zomic API")
 
-
-@api.route("/status")
-class Status(Resource):
+"""
+@api.route("/topics/get")
+class GetTopics(Resource):
+    @api.response(200, "Success")
     def get(self):
-        """Pings the server to ensure it is working as expected"""
-        return {'status': 'OK'}
+        return settings.TOPICS, 200
 
+
+@api.route("/proposals/file/getWebsite/<path:filepath>")
+class FilePath(Resource):
+    def get(self, filepath):
+        return send_file("/Users/josepereira/documents/gdg-devfest-19/website/css/"+filepath)
+
+
+@api.route("/proposals/file/getWebsitejs/<path:filepath>")
+class FilePath(Resource):
+    def get(self, filepath):
+        return send_file("/Users/josepereira/documents/gdg-devfest-19/website/js/"+filepath)
+
+
+@api.route("/proposals/file/getWebsiteImg/<path:filepath>")
+class FilePath(Resource):
+    def get(self, filepath):
+        return send_file("/Users/josepereira/documents/gdg-devfest-19/website/img/"+filepath)
+
+
+@api.route("/proposals/file/getWebsiteJS/<path:filepath>")
+class FilePath(Resource):
+    def get(self, filepath):
+        return send_file("/Users/josepereira/documents/gdg-devfest-19/website/css/"+filepath)
+
+
+@api.route("/proposals/file/getProposal/<int:id>")
+class getPath(Resource):
+    def get(self, id):
+        return send_file("/Users/josepereira/documents/gdg-devfest-19/website/postProposal/index.html")#?id="+str(id))
+
+
+@api.route("/proposals/file/postProposal/<path:wallet>")
+class postPath(Resource):
+    def get(self, wallet):
+        return send_file("/Users/josepereira/documents/gdg-devfest-19/website/getProposal/index.html")#?wallet="+WALLET)
+"""
 
 @api.route("/newsletter/subscribe")
 class SubscribeNewsletter(Resource):
@@ -268,7 +305,7 @@ class ModifyVoter(Resource):
                   message="Unauthorized Access")
 
 
-@api.route("/user/vote")
+@api.route("/user/android")
 class Vote(Resource):
     @api.expect(parsers.post_vote())
     @api.response(201, "Success")
@@ -284,7 +321,7 @@ class Vote(Resource):
 
         vote = {"proposal": args.proposal_id,
                 "wallet": checksum(args.wallet),
-                "vote": args.in_favor,
+                "android": args.in_favor,
                 "timestamp": args.timestamp}
 
         if not verify(checksum(args.wallet), str(vote), args.signature):
@@ -337,7 +374,7 @@ class ForceEnd(Resource):
         """Debug Feature Only"""
         args = parsers.parser_proposal_get().parse_args()
         try:
-            proposal = models.Proposals.get(models.Proposals.id == args.id)
+            models.Proposals.get(models.Proposals.id == args.id)
         except peewee.DoesNotExist:
             abort(code=404, error="ERROR-404", status=None,
                   message="Proposal Not Found")

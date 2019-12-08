@@ -13,7 +13,6 @@ def is_wallet(my_wallet):
 
 def email(value):
     if is_email(value):
-        # username is case sensitive, domain is insensitive (=> lowercase it)
         username, domain = value.split("@")
         return "@".join([username, domain.lower()])
     else:
