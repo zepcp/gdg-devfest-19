@@ -1,6 +1,6 @@
 import models
 
-from safe import SMTP_HOST, SMTP_USER, SMTP_PASS
+from settings import SMTP_HOST, SMTP_USER, SMTP_PASS
 from utils.telegram import Bot
 from utils.mail import Mail
 

@@ -2,9 +2,8 @@ import time
 
 import models
 
-from safe import SMTP_USER
 from utils.telegram import Bot
-from settings import OFFSET, TELEGRAM_SLEEP
+from settings import OFFSET, TELEGRAM_SLEEP, SMTP_USER
 
 ZOMIC = Bot()
 

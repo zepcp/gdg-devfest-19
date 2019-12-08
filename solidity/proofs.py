@@ -1,6 +1,4 @@
-from safe import WALLET, PASSWORD
-
-from settings import PROOFS_ABI, PROOFS_ADDRESS
+from settings import PROOFS_ABI, PROOFS_ADDRESS, WALLET, PASSWORD
 
 from utils.blockchain import Contract, get_account
 

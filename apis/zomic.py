@@ -8,7 +8,6 @@ import settings
 from parsers import parsers
 from utils.types import datetime_to_string, datetime_to_unixtimestamp, unixtimestamp_to_datetime
 from utils.blockchain import verify, checksum, get_account, sign
-from safe import WALLET, PASSWORD
 from bots.newsletter import send_proposal, send_result
 from solidity.proofs import submit_proposal
 from utils.merkletree import get_submission_info
@@ -56,7 +55,7 @@ class getPath(Resource):
 @api.route("/proposals/file/postProposal/<path:wallet>")
 class postPath(Resource):
     def get(self, wallet):
-        return send_file("/Users/josepereira/documents/gdg-devfest-19/website/getProposal/index.html")#?wallet="+WALLET)
+        return send_file("/Users/josepereira/documents/gdg-devfest-19/website/getProposal/index.html")#?wallet="+settings.WALLET)
 """
 
 @api.route("/newsletter/subscribe")
@@ -358,9 +357,9 @@ class Vote(Resource):
                                 in_favor=True if args.in_favor == "YES" else False,
                                 timestamp=args.timestamp)
 
-        receipt = sign(get_account(WALLET, PASSWORD), str(vote))
+        receipt = sign(get_account(settings.WALLET, settings.PASSWORD), str(vote))
 
-        return {"validator": WALLET,
+        return {"validator": settings.WALLET,
                 "receipt": receipt,
                 "message": "Vote Successfully Submitted"}, 201
 
