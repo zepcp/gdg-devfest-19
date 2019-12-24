@@ -80,7 +80,7 @@ def get_proof(res):
 def get_wallet(res):
     return {"community_id": res.community_id,
             "id": res.id,
-            "permissions": res.permissions,
+            "permission": res.permission,
             "level": res.level,
             }
 
@@ -125,8 +125,8 @@ def ack_proof(community_id, type, payload, signature):
 
 def add_user(community_id, user, level, wallet, permission):
     try:
-        models.User.create(community_id=community_id,
-                           user=user,
+        models.User.create(id=user,
+                           community_id=community_id,
                            level=level,
                            wallet=wallet,
                            permission=permission)

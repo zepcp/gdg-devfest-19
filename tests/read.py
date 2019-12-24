@@ -2,20 +2,27 @@ import time
 import requests
 import unittest
 
+import models
 from utils.ewt import ewt_sign
 
+models.Community.update(id="test1234").execute()
+models.User.update(community_id="test1234").execute()
+models.Proposal.update(community_id="test1234",
+                       id="prop1234").execute()
+models.Vote.update(community_id="test1234",
+                   proposal_id="prop1234").execute()
 
 url = 'http://localhost:5000/read'
 exp_ok = int(time.time() + 100000)
 
-args = {"community_id": "csAlS8JO",
-        "proposal_id": "Lt1oUfkZ",
+args = {"community_id": "test1234",
+        "proposal_id": "prop1234",
         "iss": "0x8FA6967433B76a50E0653910798b0C3D7E96F4B4",
         "exp": exp_ok}
 
 headers = {"Authorization": "Bearer {}".format(ewt_sign("test", args))}
 
-args2 = {"community_id": "csAlS8JO",
+args2 = {"community_id": "test1234",
          "iss": "0x8FA6967433B76a50E0653910798b0C3D7E96F4B4",
          "exp": exp_ok}
 
@@ -33,27 +40,22 @@ class TestRead(unittest.TestCase):
     def test_0_community(self):
         res = requests.get(url+"/community", headers=headers, params=args)
         self.assertEqual(res.status_code, 200)
-        print(res.json())
 
     def test_1_proposal(self):
         res = requests.get(url+"/proposals", headers=headers, params=args)
         self.assertEqual(res.status_code, 200)
-        print(res.json())
 
     def test_2_proposals(self):
         res = requests.get(url+"/proposals", headers=headers2, params=args2)
         self.assertEqual(res.status_code, 200)
-        print(res.json())
 
     def test_3_votes(self):
         res = requests.get(url+"/votes", headers=headers, params=args)
         self.assertEqual(res.status_code, 200)
-        print(res.json())
 
     def test_4_users(self):
         res = requests.get(url+"/users", headers=headers, params=args)
         self.assertEqual(res.status_code, 200)
-        print(res.json())
 
     def test_5_no_community(self):
         res = requests.get(url+"/community", headers=headers3, params=args3)

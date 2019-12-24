@@ -4,7 +4,7 @@ import unittest
 from tests.news import TestNews
 
 # API write.py
-# from tests.write import TestWrite
+from tests.write import TestWrite
 
 # API read.py
 from tests.read import TestRead

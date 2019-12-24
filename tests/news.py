@@ -14,8 +14,8 @@ def clean():
     models.User.delete().where(models.User.community_id == "test1234").execute()
 
     try:
-        models.User.create(community_id="test1234",
-                           user="0x" + hashlib.sha256("news@email.com".encode()).hexdigest(),
+        models.User.create(id="0x" + hashlib.sha256("news@email.com".encode()).hexdigest(),
+                           community_id="test1234",
                            level=0,
                            wallet="0x0aa704E5c55792698c8f72418d35Af2C6f521caa",
                            permission="master")
