@@ -1,176 +1,318 @@
-from flask_restplus import reqparse, inputs
+from flask_restplus import reqparse
 
-import settings
+from settings import DEFAULTS, ACTIONS, WALLET_PERMISSIONS, NEWS_BY, VOTE_OPTIONS
 from parsers import types
 
 
-def parse_newsletter():
-    parser = reqparse.RequestParser()
+def add_authentication(parser, location):
     parser.add_argument(
-        "email",
-        type=types.email,
+        "exp",
+        location=location,
+        type=types.timestamp,
         required=True,
-        help="Receiver Email"
-    )
-    return parser
-
-
-def add_voter():
-    parser = reqparse.RequestParser()
-    parser.add_argument(
-        "user_hash",
-        type=str.upper,
-        required=True,
-        help="Hash That Identifies User"
+        help="Expiration Timestamp"
     )
     parser.add_argument(
-        "wallet",
+        "iss",
+        location=location,
         type=types.wallet,
         required=True,
-        help="Voter Wallet"
+        help="Authenticated Issuer"
     )
     parser.add_argument(
-        "telegram_id",
+        "Authorization",
+        location="headers",
+        type=types.ewt,
+        required=True,
+        help="EWT Authentication"
+    )
+    return parser
+
+
+def parse_create():
+    parser = reqparse.RequestParser()
+    parser.add_argument(
+        "name",
+        location="json",
+        type=str,
+        required=True,
+        help="Community Name"
+    )
+    parser.add_argument(
+        "user_info",
+        location="json",
+        type=str,
+        required=True,
+        help="Required User Info"
+    )
+    parser.add_argument(
+        "founder",
+        location="json",
+        type=types.user,
+        required=True,
+        help="Founder ID"
+    )
+    parser.add_argument(
+        "levels",
+        location="json",
         type=int,
-        required=False,
-        help="Voter Telegram"
+        required=True,
+        default=0,
+        help="Community Levels"
     )
     parser.add_argument(
-        "email",
-        type=types.email,
+        "read_permissions",
+        location="json",
+        type=str,
+        required=True,
+        default=DEFAULTS["permissions"]["read"],
+        help="Community Read Permissions"
+    )
+    parser.add_argument(
+        "write_permissions",
+        location="json",
+        type=str,
+        required=True,
+        default=DEFAULTS["permissions"]["write"],
+        help="Community Write Permissions"
+    )
+    parser.add_argument(
+        "telegram_token",
+        location="json",
+        type=types.telegram_token,
         required=False,
-        help="Voter Email"
+        help="Telegram Bot Token"
+    )
+    parser.add_argument(
+        "submission_rate",
+        location="json",
+        type=int,
+        required=True,
+        default=30,
+        help="Blockchain Submission Rate"
+    )
+    return add_authentication(parser, "json")
+
+
+def parse_edit():
+    parser = parse_create()
+    parser.add_argument(
+        "community_id",
+        location="json",
+        type=types.community_id,
+        required=True,
+        help="Community ID"
     )
     return parser
 
 
-def delete_voter():
+def parse_propose():
     parser = reqparse.RequestParser()
     parser.add_argument(
-        "user_hash",
-        type=str.upper,
+        "community_id",
+        location="json",
+        type=types.community_id,
         required=True,
-        help="Hash That Identifies User"
-    )
-    return parser
-
-
-def get_parser_upload():
-    parser = reqparse.RequestParser()
-    parser.add_argument(
-        "url",
-        type=types.email,
-        help="Direct APK download URL",
+        help="Community ID"
     )
     parser.add_argument(
-        "priority",
-        type=str.upper,
-        choices=["YES", "NO"],
-        default="YES",
-        help="Priority of the associated Jira issue"
-    )
-
-
-def parser_proposal_post():
-    parser = reqparse.RequestParser()
-    parser.add_argument(
-        "topic",
-        choices=settings.TOPICS,
+        "approval_rate",
+        location="json",
+        type=int,
         required=True,
-        help="Proposal Topic",
-    )
-    parser.add_argument(
-        "deadline",
-        type=inputs.datetime_from_iso8601,
-        required=True,
-        help="Proposal Deadline"
+        default=DEFAULTS["approval_rate"],
+        help="Required approval rate to pass"
     )
     parser.add_argument(
         "title",
+        location="json",
         type=str,
         required=True,
         help="Proposal Title"
     )
     parser.add_argument(
         "description",
+        location="json",
         type=str,
         required=True,
         help="Proposal Description"
-    ),
-    parser.add_argument(
-        "wallet",
-        type=types.wallet,
-        help="Proposals Wallet"
-    )
-
-    return parser
-
-
-def parser_proposal_get():
-    parser = reqparse.RequestParser()
-    parser.add_argument(
-        "id",
-        type=int,
-        required=True,
-        help="Proposal ID"
-    )
-    return parser
-
-
-def modify_voter():
-    parser = reqparse.RequestParser()
-    parser.add_argument(
-        "old_wallet",
-        type=types.wallet,
-        required=True,
-        help="Old Voter Wallet"
     )
     parser.add_argument(
-        "new_wallet",
-        type=types.wallet,
-        required=True,
-        help="New Voter Wallet"
-    )
-    parser.add_argument(
-        "signature",
+        "type",
+        location="json",
         type=str,
         required=True,
-        help="New Wallet Signed By Old Wallet"
+        help="Proposal Type"
     )
-    return parser
+    parser.add_argument(
+        "deadline",
+        location="json",
+        type=int,
+        required=True,
+        help="Deadline to submit a vote"
+    )
+    return add_authentication(parser, "json")
 
 
-def post_vote():
+def parse_vote():
     parser = reqparse.RequestParser()
+    parser.add_argument(
+        "community_id",
+        location="json",
+        type=types.community_id,
+        required=True,
+        help="Community ID"
+    )
     parser.add_argument(
         "proposal_id",
-        type=int,
-        required=True,
+        location="json",
+        type=types.proposal_id,
+        required=False,
         help="Proposal ID"
-    )
-    parser.add_argument(
-        "wallet",
-        type=types.wallet,
-        required=True,
-        help="Voter Wallet"
-    )
-    parser.add_argument(
-        "signature",
-        type=str,
-        required=True,
-        help="New Wallet Signed By Old Wallet"
     )
     parser.add_argument(
         "in_favor",
-        choices=["YES", "NO"],
+        location="json",
+        choices=list(VOTE_OPTIONS),
+        required=False,
+        help="Your Vote"
+    )
+    return add_authentication(parser, "json")
+
+
+def parse_wallets():
+    parser = reqparse.RequestParser()
+    parser.add_argument(
+        "community_id",
+        location="json",
+        type=types.community_id,
         required=True,
-        help="Voter Vote"
+        help="Community ID"
     )
     parser.add_argument(
-        "timestamp",
-        type=int,
+        "action",
+        location="json",
+        choices=list(ACTIONS),
         required=True,
-        help="Vote Unix Timestamp"
+        help="Action to perform"
     )
+    parser.add_argument(
+        "wallet",
+        location="json",
+        type=types.wallet,
+        required=True,
+        help="User wallet"
+    )
+    parser.add_argument(
+        "permission",
+        location="json",
+        choices=list(WALLET_PERMISSIONS),
+        default="vote",
+        required=True,
+        help="Wallet Permissions"
+    )
+    return add_authentication(parser, "json")
 
-    return parser
+
+def parse_users():
+    parser = reqparse.RequestParser()
+    parser.add_argument(
+        "community_id",
+        location="json",
+        type=types.community_id,
+        required=True,
+        help="Community ID"
+    )
+    parser.add_argument(
+        "action",
+        location="json",
+        choices=list(ACTIONS),
+        required=True,
+        help="Action to perform"
+    )
+    parser.add_argument(
+        "user",
+        location="json",
+        type=types.user,
+        required=False,
+        help="Affected user"
+    )
+    parser.add_argument(
+        "wallet",
+        location="json",
+        type=types.wallet,
+        required=False,
+        help="User wallet"
+    )
+    return add_authentication(parser, "json")
+
+
+def parse_reads():
+    parser = reqparse.RequestParser()
+    parser.add_argument(
+        "community_id",
+        location="args",
+        type=types.community_id,
+        required=True,
+        help="Community ID"
+    )
+    parser.add_argument(
+        "proposal_id",
+        location="args",
+        type=types.proposal_id,
+        required=False,
+        help="Proposal ID"
+    )
+    return add_authentication(parser, "args")
+
+
+def parse_audits():
+    parser = reqparse.RequestParser()
+    parser.add_argument(
+        "community_id",
+        location="args",
+        type=types.community_id,
+        required=True,
+        help="Community ID"
+    )
+    parser.add_argument(
+        "proposal_id",
+        location="args",
+        type=types.proposal_id,
+        required=False,
+        help="Proposal ID"
+    )
+    return add_authentication(parser, "args")
+
+
+def parse_news():
+    parser = reqparse.RequestParser()
+    parser.add_argument(
+        "receive_by",
+        location="args",
+        choices=list(NEWS_BY),
+        required=True,
+        help="Receive Method",
+    )
+    parser.add_argument(
+        "community_id",
+        location="args",
+        type=types.community_id,
+        required=True,
+        help="Community ID"
+    )
+    parser.add_argument(
+        "email",
+        location="args",
+        type=types.email,
+        required=False,
+        help="Receiver Email"
+    )
+    parser.add_argument(
+        "chat_id",
+        location="args",
+        type=int,
+        required=False,
+        help="Telegram chat ID"
+    )
+    return add_authentication(parser, "args")

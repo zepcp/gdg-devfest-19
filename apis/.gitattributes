@@ -1,0 +1,7 @@
+# Files that are going to be encrypted
+write.py filter=git-crypt diff=git-crypt
+read.py filter=git-crypt diff=git-crypt
+audit.py filter=git-crypt diff=git-crypt
+news.py filter=git-crypt diff=git-crypt
+# Making sure that .gitattributes is never encrypted. DON'T TOUCH THAT LINE AND ONE BELOW
+.gitattributes !filter !diff
