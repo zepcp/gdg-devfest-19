@@ -29,7 +29,7 @@ args3 = {"community_id": "12345678",
 headers3 = {"Authorization": "Bearer {}".format(ewt_sign("test", args3))}
 
 
-class TestWrite(unittest.TestCase):
+class TestRead(unittest.TestCase):
     def test_0_community(self):
         res = requests.get(url+"/community", headers=headers, params=args)
         self.assertEqual(res.status_code, 200)

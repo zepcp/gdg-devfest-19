@@ -1,6 +1,7 @@
 from flask_restplus import reqparse
 
-from settings import DEFAULTS, ACTIONS, WALLET_PERMISSIONS, NEWS_BY, VOTE_OPTIONS
+from settings import DEFAULTS, ACTIONS, WALLET_PERMISSIONS,\
+    NEWS_BY, VOTE_OPTIONS, PROOF_TYPES
 from parsers import types
 
 
@@ -276,11 +277,11 @@ def parse_audits():
         help="Community ID"
     )
     parser.add_argument(
-        "proposal_id",
+        "type",
         location="args",
-        type=types.proposal_id,
+        choices=list(PROOF_TYPES),
         required=False,
-        help="Proposal ID"
+        help="Proof Type"
     )
     return add_authentication(parser, "args")
 
