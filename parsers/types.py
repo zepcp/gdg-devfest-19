@@ -6,7 +6,10 @@ from web3 import Web3
 
 
 def is_timestamp(my_timestamp):
-    return int(my_timestamp) >= time.time()
+    try:
+        return int(my_timestamp) >= time.time()
+    except ValueError:
+        return False
 
 
 def is_email(my_email):
@@ -41,6 +44,13 @@ def is_action(my_action):
 
 def is_ewt(my_ewt):
     return True if len(my_ewt.split(".")) == 3 else None
+
+
+def is_approval_rate(my_rate):
+    try:
+        return 0 < int(my_rate) <= 100
+    except ValueError:
+        return False
 
 
 def timestamp(value):
@@ -119,3 +129,10 @@ def ewt(value):
         return value
     else:
         raise ValueError("Not a valid EWT")
+
+
+def approval_rate(value):
+    if is_approval_rate(value):
+        return value
+    else:
+        raise ValueError("Not a valid Approval Rate")

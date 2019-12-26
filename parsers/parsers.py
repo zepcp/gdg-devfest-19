@@ -62,20 +62,12 @@ def parse_create():
         help="Community Levels"
     )
     parser.add_argument(
-        "read_permissions",
+        "permissions",
         location="json",
         type=str,
         required=True,
-        default=DEFAULTS["permissions"]["read"],
-        help="Community Read Permissions"
-    )
-    parser.add_argument(
-        "write_permissions",
-        location="json",
-        type=str,
-        required=True,
-        default=DEFAULTS["permissions"]["write"],
-        help="Community Write Permissions"
+        default=DEFAULTS["permissions"],
+        help="Community Permissions"
     )
     parser.add_argument(
         "telegram_token",
@@ -119,7 +111,7 @@ def parse_propose():
     parser.add_argument(
         "approval_rate",
         location="json",
-        type=int,
+        type=types.approval_rate,
         required=True,
         default=DEFAULTS["approval_rate"],
         help="Required approval rate to pass"
@@ -148,7 +140,7 @@ def parse_propose():
     parser.add_argument(
         "deadline",
         location="json",
-        type=int,
+        type=types.timestamp,
         required=True,
         help="Deadline to submit a vote"
     )
@@ -235,7 +227,7 @@ def parse_users():
         "user",
         location="json",
         type=types.user,
-        required=False,
+        required=True,
         help="Affected user"
     )
     parser.add_argument(

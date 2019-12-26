@@ -32,8 +32,7 @@ class TestWrite(unittest.TestCase):
                    "user_info": "email@email.com",
                    "founder": "0x" + hashlib.sha256(founder.encode()).hexdigest(),
                    "levels": 0,
-                   "read_permissions": DEFAULTS["permissions"]["read"],
-                   "write_permissions": DEFAULTS["permissions"]["write"],
+                   "permissions": DEFAULTS["permissions"],
                    "submission_rate": 30,
                    "iss": "0x8FA6967433B76a50E0653910798b0C3D7E96F4B4",
                    "exp": exp_ok}

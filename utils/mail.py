@@ -1,6 +1,7 @@
 """Email Interface"""
 import smtplib
 
+from os.path import basename
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
@@ -30,7 +31,7 @@ class Mail:
                     msg.attach(MIMEApplication(
                         fil.read(),
                         Content_Disposition='attachment; filename="%s"' % file,
-                        Name=file))
+                        Name=basename(file)))
 
         server = smtplib.SMTP(self.SMTP_HOST, self.SMTP_PORT)
         server.ehlo()
