@@ -165,7 +165,7 @@ def add_user(community_id, user, level, wallet, permission):
               error="ERROR-409", message="User Already Exists")
 
 
-def remove_user(community_id, user):
+def remove_user(community_id, user, level, wallet, permission):
     models.User.update(active=False).where(
         models.User.community_id == community_id,
         models.User.id == user).execute()
@@ -195,14 +195,14 @@ def last_request(community_id, wallet, args):
     current_level = get_current_level(community_id, args)
 
     required_level = 0 if who_is_allowed == "top" else\
-        current_level+1 if who_is_allowed == "above" else\
+        current_level + 1 if who_is_allowed == "above" else\
         current_level if who_is_allowed == "same" else None
 
     if required_level and required_level > wallet["level"] != 0:
         abort(code=HTTPStatus.FORBIDDEN.value,
               error="ERROR-403", message="Action Not Allowed")
 
-    requests = len(get_ongoing_requests(community_id, args))
+    requests = len(get_ongoing_requests(community_id, args)) + 1
     users = len(get_users_db(community_id, None, required_level))
 
     return requests >= users * needed_percentage / 100
