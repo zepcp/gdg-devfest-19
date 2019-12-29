@@ -1,68 +1,111 @@
 import time
-
 import models
+import peewee
 
+from settings import OFFSET, TELEGRAM_SLEEP, SMTP_USER, DATE
+from parsers.types import is_id
 from utils.telegram import Bot
-from settings import OFFSET, TELEGRAM_SLEEP, SMTP_USER
+from utils.types import datetime_to_string
 
 ZOMIC = Bot()
 
-START = """Olá! Sou o ZomicBot, estou aqui para te ajudar a participar na tua comunidade.
-Consigo-te ajudar com estas opções:
-/subscrever_newsletter
-/cancelar_subscricao
-/propostas
-/info_proposta_ID
-/ajuda"""
-SUBSCRIBED = "Registado! Irás receber updates da comunidade"
-UNSUBSCRIBED = "Registado! Vais deixar de receber updates da comunidade"
-ALREADY_SUBSCRIBED = "Já estava registado! Estás a receber updates da comunidade"
-ALREADY_UNSUBSCRIBED = "Já estava Registado! Não estás a receber updates da comunidade"
-HELP = "Envia a tua questão para {}, tentarei responder assim que possível".format(SMTP_USER)
-NO_PROPOSAL = "Não conheço o ID dessa proposta, tens a certeza que já foi submetida?"
-UNKNOWN = "Olá, não reconheço esse comando, tenta /start ou /ajuda para mais informação"
+START = """
+Hey! I'm ZomicBot and I'm here to help you engage with your community
+I can help you out with one of the below options:
+/my_chat_ID
+/my_communities
+/my_proposals
+/get_proposal_ID
+/get_help
+"""
+
+NO_COMMUNITIES = "No communities found, have you enrolled in any community?"
+NO_PROPOSALS = "No proposals found, have you enrolled in any community?"
+UNKNOWN_ID = "Don't know that ID, are you sure it is the right one?"
+UNKNOWN = "I don't understand your request, try /start or /get_help"
+HELP = "If you need further assistance send it to {}".format(SMTP_USER)
 
 
 def last_msg():
     return ZOMIC.get()[-1]['update_id'] if ZOMIC.get() else OFFSET
 
 
-def parse_message(user, text):
+def subscribed(chat_id):
+    query = models.NewsletterTelegram.select().distinct(
+        models.NewsletterTelegram.community_id).where(
+        models.NewsletterTelegram.chat_id == chat_id).execute()
+
+    response = []
+    for sub in query:
+        response.append(sub.community_id)
+    return response
+
+
+def my_print(my_table, community_id, my_communities):
+    query = my_table.select().where(
+        community_id in my_communities).execute()
+
+    response = ""
+    for my_id in query:
+        response += "/get_" + str(my_id.id) + "\n"
+    return response
+
+
+def get_proposal(value):
+    text = "Community: " + str(value.community_id)
+    text += "\nTitle: " + str(value.title)
+    text += "\nStatus: " + str(value.status)
+    if value.status != "Open":
+        text += "\nIn Favor: " + str(value.in_favor)
+        text += "\nAgainst: " + str(value.against)
+    text += "\nApproval Rate: " + str(value.approval_rate)
+    text += "\nDeadline: " + datetime_to_string(value.deadline, DATE)
+    text += "\nType: " + str(value.type)
+    text += "\nDescription: " + str(value.description)
+    return text
+
+
+def get_community(value):
+    text = "Name: " + str(value.name)
+    text += "\nInfo: " + str(value.required_info)
+    text += "\nFounder: " + str(value.founder)
+    text += "\nLevels: " + str(value.levels)
+    text += "\nPermissions: " + str(value.permissions)
+    return text
+
+
+def parse_message(user, text, communities):
     if text == "/start":
         ZOMIC.send(user, text=START)
 
-    elif text == "/subscrever_newsletter":
+    elif text == "/my_chat_ID":
+        ZOMIC.send(user, text=user)
+
+    elif text == "/my_communities":
+        answer = my_print(models.Community,
+                          models.Community.id, communities)
+        ZOMIC.send(user, text=answer if answer else NO_COMMUNITIES)
+
+    elif text == "/my_proposals":
+        answer = my_print(models.Proposal,
+                          models.Proposal.community_id, communities)
+        ZOMIC.send(user, text=answer if answer else NO_PROPOSALS)
+
+    elif text[0:5] == "/get_" and is_id(text[5:]):
         try:
-            models.NewsletterTelegram.create(id=user)
-            ZOMIC.send(user, text=SUBSCRIBED)
-        except:
-            models.db.close()
-            ZOMIC.send(user, text=ALREADY_SUBSCRIBED)
+            answer = models.Proposal.get(
+                models.Proposal.id == text[5:],
+                models.Proposal.community_id in communities)
+            ZOMIC.send(user, text=get_proposal(answer))
+        except peewee.DoesNotExist:
+            try:
+                answer = models.Community.get(
+                    models.Community.id == text[5:])
+                ZOMIC.send(user, text=get_community(answer))
+            except peewee.DoesNotExist:
+                ZOMIC.send(user, text=UNKNOWN_ID)
 
-    elif text == "/cancelar_subscricao":
-        models.NewsletterTelegram.delete().where(models.NewsletterTelegram.id == user).execute()
-        ZOMIC.send(user, text=UNSUBSCRIBED)
-
-    elif text == "/propostas":
-        proposals = models.Proposals.select().execute()
-        response = ""
-        for proposal in proposals:
-            response += "/info_proposta_" + str(proposal.id) + "\n"
-        ZOMIC.send(user, text=response)
-
-    elif "/info_proposta_" in text:
-        try:
-            proposal_id = int(text.split("_")[2])
-            proposal = models.Proposals.get(models.Proposals.id == proposal_id)
-
-            ZOMIC.send(user, text="Titulo: "+str(proposal.title))
-            ZOMIC.send(user, text="Tópico: "+str(proposal.topic))
-            ZOMIC.send(user, text="Deadline: "+str(proposal.deadline)[:10])
-            ZOMIC.send(user, text="Descrição: "+proposal.description)
-        except (ValueError, IndexError):
-            ZOMIC.send(user, text=NO_PROPOSAL)
-
-    elif text == "/ajuda":
+    elif text == "/get_help":
         ZOMIC.send(user, text=HELP)
 
     else:
@@ -82,7 +125,8 @@ if __name__ == "__main__":
                 message = msg["edited_message"]
 
             try:
-                parse_message(message["from"]["id"], message["text"])
+                parse_message(message["from"]["id"], message["text"],
+                              subscribed(message["from"]["id"]))
             except KeyError:
                 continue
             last_msg = msg["update_id"]
