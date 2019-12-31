@@ -160,14 +160,14 @@ def parse_vote():
         "proposal_id",
         location="json",
         type=types.proposal_id,
-        required=False,
+        required=True,
         help="Proposal ID"
     )
     parser.add_argument(
         "in_favor",
         location="json",
         choices=list(VOTE_OPTIONS),
-        required=False,
+        required=True,
         help="Your Vote"
     )
     return add_authentication(parser, "json")
