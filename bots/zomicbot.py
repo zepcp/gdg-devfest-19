@@ -2,7 +2,7 @@ import time
 import peewee
 
 from models import zomic as db
-from settings import OFFSET, TELEGRAM_SLEEP, SMTP, DATE, ZOMIC_URL
+from settings import OFFSET, SLEEP, SMTP, DATE, ZOMIC_URL
 from parsers.types import is_id
 from utils.telegram import Bot
 from utils.types import datetime_to_string
@@ -114,6 +114,7 @@ def parse_message(user, text, communities):
 
 if __name__ == "__main__":
     last_msg = last_msg()
+    last_time = time.time()
     while True:
         for msg in ZOMIC.get(last_msg):
             if msg["update_id"] <= last_msg:
@@ -127,8 +128,9 @@ if __name__ == "__main__":
             try:
                 parse_message(message["from"]["id"], message["text"],
                               subscribed(message["from"]["id"]))
+                last_time = time.time()
             except KeyError:
                 continue
             last_msg = msg["update_id"]
 
-        time.sleep(TELEGRAM_SLEEP)
+        time.sleep(max(SLEEP["min"], min((time.time()-last_time)/SLEEP["step"], SLEEP["max"])))

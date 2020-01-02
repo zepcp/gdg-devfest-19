@@ -4,7 +4,7 @@ import unidecode
 import logging
 import peewee
 
-from settings import TIMESTAMP, OFFSET, TELEGRAM_SLEEP, BARROSBOT_URL
+from settings import TIMESTAMP, OFFSET, SLEEP, BARROSBOT_URL
 from utils.telegram import Bot
 from models import barrosbot as db
 from strings import barrosbot as strings
@@ -515,6 +515,7 @@ def get_username(msg):
 if __name__ == "__main__":
     LAST_MSG = last_msg()
     STARTED = time.time()
+    last_time = STARTED
     UPDATE_ID = 0
     while True:
         for msg in BEBOT.get(UPDATE_ID):
@@ -551,7 +552,7 @@ if __name__ == "__main__":
 
             LOGGER.debug(uid, text, game, username)
             process_msg(uid, text, game, username)
+            last_time = time.time()
 
         LAST_MSG = UPDATE_ID
-        time.sleep(TELEGRAM_SLEEP)
-
+        time.sleep(max(SLEEP["min"], min((time.time()-last_time)/SLEEP["step"], SLEEP["max"])))
