@@ -8,3 +8,4 @@ celery
 requests
 unidecode
 picamera
+web3
