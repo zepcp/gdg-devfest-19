@@ -1,7 +1,7 @@
 import functools
 from sha3 import keccak_256
 
-import models
+from models import zomic as db
 from utils import types
 
 
@@ -20,7 +20,7 @@ def compute(hash_list):
 
 
 def get_submission_info(proposal_id):
-    votes = models.Votes.select().where(models.Votes.proposal_id == proposal_id).execute()
+    votes = db.Votes.select().where(db.Votes.proposal_id == proposal_id).execute()
     hash_list = []
     in_favor, against = 0, 0
     for x in votes:

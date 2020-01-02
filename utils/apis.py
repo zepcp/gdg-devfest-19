@@ -3,7 +3,7 @@ import peewee
 from http import HTTPStatus
 from flask_restplus import abort
 
-import models
+from models import zomic as db
 from settings import WALLET, PASSWORD, DATE
 from utils.ewt import ewt_validate
 from utils.types import datetime_to_string
@@ -96,30 +96,30 @@ def get_all(function, res, error_message):
 
 
 def get_proofs_db(community_id, proof_type, error_message, user=None, level=None, wallet=None):
-    res = models.Proof.select().where(
-        models.Proof.type == proof_type if proof_type else True,
-        models.Proof.community_id == community_id,
-        models.Proof.user == user if user else True,
-        models.Proof.level == level if level else True,
-        models.Proof.wallet == wallet if wallet else True,
+    res = db.Proof.select().where(
+        db.Proof.type == proof_type if proof_type else True,
+        db.Proof.community_id == community_id,
+        db.Proof.user == user if user else True,
+        db.Proof.level == level if level else True,
+        db.Proof.wallet == wallet if wallet else True,
     ).execute()
     return get_all(get_proof, res, error_message)
 
 
 def get_users_db(community_id, error_message, level=None):
-    res = models.User.select().distinct(models.User.id).where(
-        models.User.community_id == community_id,
-        models.User.active,
-        models.User.level >= level if level else True
+    res = db.User.select().distinct(db.User.id).where(
+        db.User.community_id == community_id,
+        db.User.active,
+        db.User.level >= level if level else True
     ).execute()
     return get_all(get_user, res, error_message)
 
 
 def get_user_db(community_id, user, suppress=False):
     try:
-        user = models.User.get(models.User.community_id == community_id,
-                               models.User.id == user,
-                               models.User.active)
+        user = db.User.get(db.User.community_id == community_id,
+                               db.User.id == user,
+                               db.User.active)
         return get_user(user)
     except peewee.DoesNotExist:
         if not suppress:
@@ -130,9 +130,9 @@ def get_user_db(community_id, user, suppress=False):
 
 def get_wallet_db(community_id, wallet, active=True):
     try:
-        user = models.User.get(models.User.community_id == community_id,
-                               models.User.wallet == wallet,
-                               models.User.active if active else True)
+        user = db.User.get(db.User.community_id == community_id,
+                               db.User.wallet == wallet,
+                               db.User.active if active else True)
         return get_wallet(user)
     except peewee.DoesNotExist:
         abort(code=HTTPStatus.FORBIDDEN.value,
@@ -141,7 +141,7 @@ def get_wallet_db(community_id, wallet, active=True):
 
 def ack_proof(community_id, type, payload, signature, user=None, level=None, wallet=None):
     ack = sign(get_account(WALLET, PASSWORD), payload)
-    models.Proof.create(community_id=community_id,
+    db.Proof.create(community_id=community_id,
                         type=type,
                         user=user,
                         level=level,
@@ -154,27 +154,29 @@ def ack_proof(community_id, type, payload, signature, user=None, level=None, wal
 
 def add_user(community_id, user, level, wallet, permission):
     try:
-        models.User.create(id=user,
+        db.User.create(id=user,
                            community_id=community_id,
                            level=level,
                            wallet=wallet,
                            permission=permission)
     except peewee.IntegrityError:
-        models.db.close()
+        db.db.close()
         abort(code=HTTPStatus.CONFLICT.value,
               error="ERROR-409", message="User Already Exists")
 
 
 def remove_user(community_id, user, level, wallet, permission):
-    models.User.update(active=False).where(
-        models.User.community_id == community_id,
-        models.User.id == user).execute()
+    db.User.update(active=False).where(
+        db.User.community_id == community_id,
+        db.User.id == user if user else True,
+        db.User.wallet == wallet if not user else True,
+    ).execute()
 
 
 def get_current_level(community_id, args):
     user = get_user_db(community_id, args.user, True)
     return user["level"] if user \
-        else models.Community.get(models.Community.id == args.community_id).levels
+        else db.Community.get(db.Community.id == args.community_id).levels
 
 
 def get_ongoing_requests(community_id, args):
@@ -184,7 +186,7 @@ def get_ongoing_requests(community_id, args):
 
 
 def get_permissions(community_id, action):
-    permissions = models.Community.get(models.Community.id == community_id).permissions
+    permissions = db.Community.get(db.Community.id == community_id).permissions
     needed_percentage = json.loads(permissions.replace("'", '"'))[action]
     for who_is_allowed in needed_percentage:
         return who_is_allowed, needed_percentage[who_is_allowed]

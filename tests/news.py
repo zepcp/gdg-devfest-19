@@ -4,17 +4,17 @@ import unittest
 import peewee
 import hashlib
 
-import models
+from models import zomic as db
 from utils.ewt import ewt_sign
 
 
 def clean():
-    models.NewsletterTelegram.delete().execute()
-    models.NewsletterEmail.delete().execute()
-    models.User.delete().where(models.User.community_id == "test1234").execute()
+    db.NewsletterTelegram.delete().execute()
+    db.NewsletterEmail.delete().execute()
+    db.User.delete().where(db.User.community_id == "test1234").execute()
 
     try:
-        models.User.create(id="0x" + hashlib.sha256("news@email.com".encode()).hexdigest(),
+        db.User.create(id="0x" + hashlib.sha256("news@email.com".encode()).hexdigest(),
                            community_id="test1234",
                            level=0,
                            wallet="0x0aa704E5c55792698c8f72418d35Af2C6f521caa",

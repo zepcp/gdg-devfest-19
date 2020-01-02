@@ -1,13 +1,12 @@
 """Telegram utils"""
 import os
 import requests
-from settings import BOT_URL
 
 
 class Bot:
     """Telegram bot class, get and send info"""
-    def __init__(self):
-        self.base_url = BOT_URL
+    def __init__(self, bot_url):
+        self.base_url = bot_url
 
     def get_url(self, params=None):
         """Get Telegram URL"""

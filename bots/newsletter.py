@@ -1,25 +1,25 @@
-import models
+from models import zomic as db
 
-from settings import SMTP_HOST, SMTP_USER, SMTP_PASS
+from settings import SMTP, ZOMIC_URL
 from utils.telegram import Bot
 from utils.mail import Mail
 
 
 def send_by_mail(subject, message, to_address):
-    return Mail(SMTP_HOST, SMTP_USER, SMTP_PASS).send_mail(subject, message, to_address)
+    return Mail(SMTP).send_mail(subject, message, to_address)
 
 
 def send_by_telegram(subject, message, telegram_id):
-    Bot().send(telegram_id, subject)
-    return Bot().send(telegram_id, message)
+    Bot(ZOMIC_URL).send(telegram_id, subject)
+    return Bot(ZOMIC_URL).send(telegram_id, message)
 
 
 def send_proposal(proposta_id):
-    subject = "Nova Proposta - " + str(proposta_id)
+    subject = "New Proposal - " + str(proposta_id)
     message = "Details"
 
-    mail_list = models.NewsletterEmail.select().where().execute()
-    telegram_list = models.NewsletterTelegram.select().where().execute()
+    mail_list = db.NewsletterEmail.select().where().execute()
+    telegram_list = db.NewsletterTelegram.select().where().execute()
 
     for to_address in mail_list:
         send_by_mail(subject, message, to_address)
@@ -30,13 +30,13 @@ def send_proposal(proposta_id):
 
 
 def send_result(proposta_id, result, in_favor, against, txid):
-    subject = "Proposta - " + str(proposta_id) + ": " + result
-    message = "Votos a Favor: {}\nVotos Contra: {}\nTxID: {}".format(str(in_favor),
-                                                                     str(against),
-                                                                     txid)
+    subject = "Proposal - " + str(proposta_id) + ": " + result
+    message = "Votes in Favor: {}\nVotes Against: {}\nTxID: {}".format(str(in_favor),
+                                                                       str(against),
+                                                                       txid)
 
-    mail_list = models.NewsletterEmail.select().execute()
-    telegram_list = models.NewsletterTelegram.select().execute()
+    mail_list = db.NewsletterEmail.select().execute()
+    telegram_list = db.NewsletterTelegram.select().execute()
 
     for mail in mail_list:
         send_by_mail(subject, message, mail.email)

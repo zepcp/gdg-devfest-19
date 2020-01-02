@@ -1,5 +1,6 @@
 # Files that are going to be encrypted
-models.py filter=git-crypt diff=git-crypt
-interact.py filter=git-crypt diff=git-crypt
+base.py filter=git-crypt diff=git-crypt
+local.py filter=git-crypt diff=git-crypt
+production.py filter=git-crypt diff=git-crypt
 # Making sure that .gitattributes is never encrypted. DON'T TOUCH THAT LINE AND ONE BELOW
 .gitattributes !filter !diff

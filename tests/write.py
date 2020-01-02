@@ -3,17 +3,17 @@ import requests
 import unittest
 import hashlib
 
-import models
+from models import zomic as db
 from settings import DEFAULTS
 from utils.ewt import ewt_sign
 
 
 def clean():
-    models.Community.delete().execute()
-    models.User.delete().execute()
-    models.Proposal.delete().execute()
-    models.Vote.delete().execute()
-    models.Proof.delete().execute()
+    db.Community.delete().execute()
+    db.User.delete().execute()
+    db.Proposal.delete().execute()
+    db.Vote.delete().execute()
+    db.Proof.delete().execute()
 
 
 create_url = 'http://localhost:5000/write/create'
@@ -71,57 +71,57 @@ class TestWrite(unittest.TestCase):
         self.assertEqual(res.status_code, 409)
 
     def test_02_edit(self):
-        args = {**self.create_args, "community_id": models.Community.get().id}
+        args = {**self.create_args, "community_id": db.Community.get().id}
         headers = {"Authorization": "Bearer {}".format(ewt_sign("test", args))}
         res = requests.put(edit_url, headers=headers, json=args)
         self.assertEqual(res.status_code, 201)
 
     def test_03_propose(self):
-        args = {**self.proposal_args, "community_id": models.Community.get().id}
+        args = {**self.proposal_args, "community_id": db.Community.get().id}
         headers = {"Authorization": "Bearer {}".format(ewt_sign("test", args))}
         res = requests.put(propose_url, headers=headers, json=args)
         self.assertEqual(res.status_code, 201)
 
     def test_04_duplicate(self):
-        args = {**self.proposal_args, "community_id": models.Community.get().id}
+        args = {**self.proposal_args, "community_id": db.Community.get().id}
         headers = {"Authorization": "Bearer {}".format(ewt_sign("test", args))}
         res = requests.put(propose_url, headers=headers, json=args)
         self.assertEqual(res.status_code, 409)
 
     def test_05_vote(self):
-        args = {**self.vote_args, "community_id": models.Community.get().id,
-                "proposal_id": models.Proposal.get().id}
+        args = {**self.vote_args, "community_id": db.Community.get().id,
+                "proposal_id": db.Proposal.get().id}
         headers = {"Authorization": "Bearer {}".format(ewt_sign("test", args))}
         res = requests.put(vote_url, headers=headers, json=args)
         self.assertEqual(res.status_code, 201)
 
     def test_06_duplicate(self):
-        args = {**self.vote_args, "community_id": models.Community.get().id,
-                "proposal_id": models.Proposal.get().id}
+        args = {**self.vote_args, "community_id": db.Community.get().id,
+                "proposal_id": db.Proposal.get().id}
         headers = {"Authorization": "Bearer {}".format(ewt_sign("test", args))}
         res = requests.put(vote_url, headers=headers, json=args)
         self.assertEqual(res.status_code, 409)
 
     def test_07_add_wallet(self):
-        args = {**self.wallet_args, "community_id": models.Community.get().id, "action": "add"}
+        args = {**self.wallet_args, "community_id": db.Community.get().id, "action": "add"}
         headers = {"Authorization": "Bearer {}".format(ewt_sign("test", args))}
         res = requests.put(wallet_url, headers=headers, json=args)
         self.assertEqual(res.status_code, 201)
 
     def test_08_remove_wallet(self):
-        args = {**self.wallet_args, "community_id": models.Community.get().id, "action": "remove"}
+        args = {**self.wallet_args, "community_id": db.Community.get().id, "action": "remove"}
         headers = {"Authorization": "Bearer {}".format(ewt_sign("test", args))}
         res = requests.put(wallet_url, headers=headers, json=args)
         self.assertEqual(res.status_code, 201)
 
     def test_09_add_user(self):
-        args = {**self.user_args, "community_id": models.Community.get().id, "action": "add"}
+        args = {**self.user_args, "community_id": db.Community.get().id, "action": "add"}
         headers = {"Authorization": "Bearer {}".format(ewt_sign("test", args))}
         res = requests.put(user_url, headers=headers, json=args)
         self.assertEqual(res.status_code, 201)
 
     def test_10_remove_user(self):
-        args = {**self.user_args, "community_id": models.Community.get().id, "action": "remove"}
+        args = {**self.user_args, "community_id": db.Community.get().id, "action": "remove"}
         headers = {"Authorization": "Bearer {}".format(ewt_sign("test", args))}
         res = requests.put(user_url, headers=headers, json=args)
         self.assertEqual(res.status_code, 201)

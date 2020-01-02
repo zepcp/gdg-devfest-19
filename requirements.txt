@@ -1,4 +1,10 @@
 peewee
 Flask
 flask-restplus
+gunicorn
+gevent
+redis
+celery
 requests
+unidecode
+picamera

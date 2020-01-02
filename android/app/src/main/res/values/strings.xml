@@ -1,7 +1,0 @@
-<resources>
-    <string name="app_name">VOTING\nMADE\nEASY</string>
-    <string name="proposal_number">Proposal number</string>
-    <string name="yes">Yes</string>
-    <string name="no">No</string>
-    <string name="vote">Vote</string>
-</resources>

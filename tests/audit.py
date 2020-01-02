@@ -2,11 +2,11 @@ import time
 import requests
 import unittest
 
-import models
+from models import zomic as db
 from settings import PROOF_TYPES
 from utils.ewt import ewt_sign
 
-models.Proof.update(community_id="test1234").execute()
+db.Proof.update(community_id="test1234").execute()
 
 url = 'http://localhost:5000/audit/proofs'
 exp_ok = int(time.time() + 100000)

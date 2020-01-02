@@ -2,14 +2,14 @@ import time
 import requests
 import unittest
 
-import models
+from models import zomic as db
 from utils.ewt import ewt_sign
 
-models.Community.update(id="test1234").execute()
-models.User.update(community_id="test1234").execute()
-models.Proposal.update(community_id="test1234",
+db.Community.update(id="test1234").execute()
+db.User.update(community_id="test1234").execute()
+db.Proposal.update(community_id="test1234",
                        id="prop1234").execute()
-models.Vote.update(community_id="test1234",
+db.Vote.update(community_id="test1234",
                    proposal_id="prop1234").execute()
 
 url = 'http://localhost:5000/read'
