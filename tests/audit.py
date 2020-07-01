@@ -3,7 +3,7 @@ import requests
 import unittest
 
 from models import zomic as db
-from settings import PROOF_TYPES
+from settings import TX_TYPES
 from utils.ewt import ewt_sign
 
 db.Proof.update(community_id="test1234").execute()
@@ -24,7 +24,7 @@ class TestAudit(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
 
     def test_1_proof_by_type(self):
-        for proof_type in PROOF_TYPES:
+        for proof_type in TX_TYPES:
             args2 = args
             args2["type"] = proof_type
             headers2 = {"Authorization": "Bearer {}".format(ewt_sign("test", args2))}

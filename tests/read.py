@@ -8,9 +8,10 @@ from utils.ewt import ewt_sign
 db.Community.update(id="test1234").execute()
 db.User.update(community_id="test1234").execute()
 db.Proposal.update(community_id="test1234",
-                       id="prop1234").execute()
+                   id="prop1234",
+                   status="approved").execute()
 db.Vote.update(community_id="test1234",
-                   proposal_id="prop1234").execute()
+               proposal_id="prop1234").execute()
 
 url = 'http://localhost:5000/read'
 exp_ok = int(time.time() + 100000)
@@ -38,7 +39,7 @@ headers3 = {"Authorization": "Bearer {}".format(ewt_sign("test", args3))}
 
 class TestRead(unittest.TestCase):
     def test_0_community(self):
-        res = requests.get(url+"/community", headers=headers, params=args)
+        res = requests.get(url+"/communities", headers=headers, params=args)
         self.assertEqual(res.status_code, 200)
 
     def test_1_proposal(self):

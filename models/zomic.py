@@ -1,5 +1,5 @@
 import peewee
-import datetime
+from time import time
 
 from settings import DB, LENGTHS, DEFAULTS
 
@@ -21,17 +21,17 @@ class BaseModel(peewee.Model):
 class Community(BaseModel):
     id = peewee.CharField(max_length=LENGTHS["id"], unique=True, index=True)
     name = peewee.CharField(max_length=LENGTHS["default"], unique=True)
+    secret = peewee.BooleanField(default=False)
     required_info = peewee.CharField(max_length=LENGTHS["json"], null=False)
     founder = peewee.CharField(max_length=LENGTHS["hash"], null=False)
-    levels = peewee.IntegerField(default=DEFAULTS["levels"])
     permissions = peewee.CharField(max_length=LENGTHS["json"],
                                    default=str(DEFAULTS["permissions"]))
     telegram_token = peewee.CharField(max_length=LENGTHS["telegram_token"], null=True)  # Private
     submission_rate = peewee.IntegerField(default=DEFAULTS["submission_rate"])
-    timestamp = peewee.DateTimeField()  # Signed
+    timestamp = peewee.IntegerField()  # Signed
     wallet = peewee.CharField(max_length=LENGTHS["wallet"], null=False)
     signature = peewee.CharField(max_length=LENGTHS["signature"], unique=True)
-    db_ts = peewee.DateTimeField(default=datetime.datetime.utcnow)
+    db_ts = peewee.IntegerField(default=time())
 
     class Meta:
         db_table = "communities"
@@ -40,11 +40,10 @@ class Community(BaseModel):
 class User(BaseModel):  # New Entry for each User Wallet - Immutable
     id = peewee.CharField(max_length=LENGTHS["hash"], null=False)
     community_id = peewee.CharField(max_length=LENGTHS["id"], null=False, index=True)
-    level = peewee.IntegerField(null=False)
     wallet = peewee.CharField(max_length=LENGTHS["wallet"], unique=True)  # Private
-    permission = peewee.CharField(max_length=LENGTHS["type"], default=DEFAULTS["wallet"])
+    admin = peewee.BooleanField(default=False)
     active = peewee.BooleanField(default=True)
-    db_ts = peewee.DateTimeField(default=datetime.datetime.utcnow)
+    db_ts = peewee.IntegerField(default=time())
 
     class Meta:
         db_table = "users"
@@ -57,14 +56,14 @@ class Proposal(BaseModel):  # New Entry for each Proposal - Immutable
     description = peewee.CharField(max_length=LENGTHS["description"])  # Signed
     title = peewee.CharField(max_length=LENGTHS["default"], unique=True)  # Signed
     type = peewee.CharField(max_length=LENGTHS["type"])  # Signed
-    deadline = peewee.DateTimeField(null=False)  # Signed
+    deadline = peewee.IntegerField(null=False)  # Signed
     status = peewee.CharField(max_length=LENGTHS["type"], default=DEFAULTS["status"])
     in_favor = peewee.IntegerField(null=True)
     against = peewee.IntegerField(null=True)
-    timestamp = peewee.DateTimeField()  # Signed
-    wallet = peewee.CharField(max_length=LENGTHS["wallet"], unique=True)
+    timestamp = peewee.IntegerField()  # Signed
+    wallet = peewee.CharField(max_length=LENGTHS["wallet"])
     signature = peewee.CharField(max_length=LENGTHS["signature"], unique=True)
-    db_ts = peewee.DateTimeField(default=datetime.datetime.utcnow)
+    db_ts = peewee.IntegerField(default=time())
 
     class Meta:
         db_table = "proposals"
@@ -75,10 +74,10 @@ class Vote(BaseModel):  # New Entry for each Vote - Immutable
     proposal_id = peewee.CharField(max_length=LENGTHS["id"], null=False, index=True)  # Signed
     user = peewee.CharField(max_length=LENGTHS["hash"], null=False, index=True)  # Private
     in_favor = peewee.BooleanField()  # Signed
-    timestamp = peewee.DateTimeField()  # Signed
-    wallet = peewee.CharField(max_length=LENGTHS["wallet"], unique=True)
+    timestamp = peewee.IntegerField()  # Signed
+    wallet = peewee.CharField(max_length=LENGTHS["wallet"])
     signature = peewee.CharField(max_length=LENGTHS["signature"], unique=True)
-    db_ts = peewee.DateTimeField(default=datetime.datetime.utcnow)
+    db_ts = peewee.IntegerField(default=time())
 
     class Meta:
         db_table = "votes"
@@ -88,13 +87,12 @@ class Proof(BaseModel):
     community_id = peewee.CharField(max_length=LENGTHS["id"], null=False, index=True)
     type = peewee.CharField(max_length=LENGTHS["type"], null=False)
     user = peewee.CharField(max_length=LENGTHS["hash"], null=True)  # Only for add_user/remove_user
-    level = peewee.IntegerField(null=True)  # Only for add_user/remove_user
     wallet = peewee.CharField(max_length=LENGTHS["wallet"],  null=True)  # Only for add_user
     payload = peewee.CharField(max_length=LENGTHS["payload"], null=False)
     signature = peewee.CharField(max_length=LENGTHS["signature"], unique=True)
     ack = peewee.CharField(max_length=LENGTHS["signature"], unique=True)
     txid = peewee.CharField(max_length=LENGTHS["transaction"], null=True)
-    db_ts = peewee.DateTimeField(default=datetime.datetime.utcnow)
+    db_ts = peewee.IntegerField(default=time())
 
     class Meta:
         db_table = "proofs"
@@ -116,6 +114,7 @@ class NewsletterEmail(BaseModel):
     class Meta:
         db_table = "newsletter_email"
         indexes = ((('community_id', 'email'), True),)
+
 
 """
 Community.drop_table()

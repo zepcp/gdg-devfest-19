@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Guia Sport TV</title>
+    <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="author" content="Joao Bordalo"/>
+    <meta name="description" content="Guia Sport TV"/>
+    <meta name="keywords" content="guia sporttv epg"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+</head>
+
+<body>
+<style>
+    body {
+        margin: 0;
+        background-color: #f0f0f0;
+    }
+
+    div {
+        padding: 1em 5%;
+    }
+
+    #navigation_bar {
+        width: 90%;
+    }
+
+    #main_content {
+        margin-top: 5em;
+    }
+
+    #loading,
+    #load_more,
+    #footer {
+        text-align: center;
+    }
+
+    div.event {
+        border-bottom: 1px solid black;
+        background-color: white;
+    }
+
+    div.DIRETO {
+        background-color: lightyellow;
+    }
+
+    div.live {
+        background-color: lightpink;
+    }
+
+    div.mainUI {
+        display: flex;
+        justify-content: space-between;
+        position: fixed;
+        top: 0;
+        background-color: lavender;
+        border-bottom: 1px solid black;
+        width: 80%;
+    }
+
+    div.event p:first-child {
+        font-weight: 700;
+    }
+
+    p {
+        margin: 0.3em 0;
+    }
+
+    span {
+        margin-right: 1em;
+        font-size: 0.8em;
+    }
+
+    span.live {
+        margin-left: 1em;
+        padding: 0 1em;
+        background-color: #ffda00;
+    }
+
+    a.anchor::before {
+        display: block;
+        content: ' ';
+        margin-top: -8em;
+        height: 8em;
+        visibility: hidden;
+        pointer-events: none;
+    }
+</style>
+<div id="loading">
+    <p>A carregar (menos de 5 segundos)...</p>
+</div>
+<div id="navigation_bar"></div>
+<div id="main_content"></div>
+<div id="load_more"></div>
+<div id="footer">
+    <p><a href="https://github.com/bordalix/guiasporttv">github</a></p>
+</div>
+<script>
+    // application state
+    const state = {
+        day: 0, // how many days have we fetched from the api
+        data: [], // store all events returned by api
+        filter: {} // if we want to filter by sport or channel
+    };
+
+    // util function, returns a DOM element, keep your code DRY
+    function dce(kind, params = {}, html = null) {
+        const e = document.createElement(kind);
+        const attrs = Object.keys(params);
+        attrs.map(attr => e.setAttribute(attr, params[attr]));
+        if (html) e.innerHTML = html;
+        return e;
+    }
+
+    // toggle text in load more button
+    function toggleLoadMoreButton() {
+        const b = document.getElementById('load_more_button');
+        if (b)
+            b.innerHTML = b.innerHTML == 'Próximo dia' ? 'A carregar...' : 'Próximo dia';
+    }
+
+    // add navigation bar
+    function addUI() {
+        // util function, removes a element from main_content
+        function removeFromMainContent(el) {
+            const main = document.getElementById('main_content');
+            if (main) main.removeChild(el);
+        }
+
+        // removes all events from the DOM
+        function removeAllEvents() {
+            // remove <a> used to scroll to present time
+            const pr = document.getElementById('present');
+            if (pr) removeFromMainContent(pr);
+            // remove all events stored in state.data
+            state.data.map(e => {
+                const id = 'x' + e.id;
+                const el = document.getElementById(id);
+                if (el) removeFromMainContent(el);
+            });
+        }
+
+        // return a select dropdown element with all channels
+        function channelsSelect() {
+            // create DOM element
+            const select = dce('select', {id: 'channelsSelect'});
+            // event handler
+            select.onchange = function (ev) {
+                // remove all events
+                removeAllEvents();
+                // reset sports select to default option
+                const other = document.getElementById('sportsSelect');
+                other.value = 'all';
+                // update state.filter to reflect change
+                const channel = ev.target.value;
+                state.filter = channel == 'all' ? {} : {channel: channel};
+                // render data with new filter applied
+                renderData();
+            };
+            return select;
+        }
+
+        // return a select dropdown element with all sports
+        function sportsSelect() {
+            // create DOM element
+            const select = dce('select', {id: 'sportsSelect'});
+            // event handler
+            select.onchange = ev => {
+                // remove all events
+                removeAllEvents();
+                // reset channel select to default option
+                const other = document.getElementById('channelsSelect');
+                other.value = 'all';
+                // update state.filter to reflect change
+                const sport = ev.target.value;
+                state.filter = sport == 'all' ? {} : {sport: sport};
+                // render data with new filter applied
+                renderData();
+            };
+            return select;
+        }
+
+        // add load more button at the end of events list
+        function addLoadMoreButton() {
+            const button = dce('button', {id: 'load_more_button'}, 'Próximo dia');
+            button.onclick = () => {
+                state.day = state.day + 1;
+                toggleLoadMoreButton();
+                fetchData();
+            };
+            const loadMore = document.getElementById('load_more');
+            if (loadMore) loadMore.appendChild(button);
+        }
+
+        // return if UI already inserted
+        if (document.getElementById('goToNow')) return null;
+        // remove loading message if still present
+        const loading = document.getElementById('loading');
+        if (loading) loading.remove();
+        // add 'Agora' link, which scrolls to live on tv now
+        const p = dce('p', {}, '<a id="goToNow" href="#present">Agora</a>');
+        // sports select wraped on a p for line height
+        const s_select = sportsSelect();
+        const p_sports = dce('p');
+        p_sports.appendChild(s_select);
+        // channel select wraped on a p for line height
+        const c_select = channelsSelect();
+        const p_channels = dce('p');
+        p_channels.appendChild(c_select);
+        // div container, class mainUI
+        const div = dce('div');
+        div.classList.add('mainUI');
+        div.appendChild(p);
+        div.appendChild(p_channels);
+        div.appendChild(p_sports);
+        // add div container to navigation bar
+        const navigationBar = document.getElementById('navigation_bar');
+        if (navigationBar) navigationBar.appendChild(div);
+        // add load more button
+        addLoadMoreButton();
+    }
+
+    // render data received
+    function renderData(data = state.data) {
+        // util function, add element to main_content
+        function addToMainContent(el) {
+            const main = document.getElementById('main_content');
+            if (main) main.appendChild(el);
+        }
+
+        // add default option to a select dropdown
+        function addDefaultOption(select, text) {
+            const option = dce('option');
+            option.text = text;
+            option.value = 'all';
+            select.add(option);
+        }
+
+        // add options to a select dropdown
+        function addOptions(id) {
+            // find select dropdown or return
+            const select = document.getElementById(id);
+            if (!select) return null;
+            // config object for sports and channel select
+            const cfg = {
+                sportsSelect: {
+                    defaultText: 'Filtrar por desporto',
+                    // use new Set to eliminate duplicates
+                    options: [...new Set(state.data.map(e => e.modalidade.nomeModalidade))]
+                },
+                channelsSelect: {
+                    defaultText: 'Filtrar por canal',
+                    // use new Set to eliminate duplicates
+                    options: [...new Set(state.data.map(e => e.canal.nome))]
+                }
+            };
+            // save value to restore state at the end
+            const value = select.value;
+            // delete all options
+            select.innerHTML = '';
+            // add default option
+            addDefaultOption(select, cfg[id].defaultText);
+            // add all options
+            cfg[id].options.sort().map(o => {
+                const option = dce('option');
+                option.text = o;
+                select.add(option);
+            });
+            // restore value
+            select.value = value || 'all';
+        }
+
+        // dates
+        let start = new Date();
+        let end = new Date();
+        let now = new Date();
+        let presentFound = false;
+        // render all events received
+        data.map(e => {
+            // check for filters
+            if (state.filter.channel && e.canal.nome != state.filter.channel) return;
+            if (state.filter.sport && e.modalidade.nomeModalidade != state.filter.sport)
+                return;
+            // title row
+            title = dce('p', {}, e.descricao);
+            // channel and sport row
+            channel = dce('span', {}, e.canal.nome);
+            event = dce('span', {}, e.evento.nome);
+            sport = dce('span', {}, e.modalidade.nomeModalidade);
+            infoRow = document.createElement('p');
+            infoRow.appendChild(channel);
+            infoRow.appendChild(event);
+            infoRow.appendChild(sport);
+            // time row
+            start.setTime(e.data);
+            day = dce('span', {}, start.toDateString());
+            init = dce('span', {}, start.toLocaleTimeString('pt-PT'));
+            end.setTime(e.data + e.duracao);
+            finish = dce('span', {}, end.toLocaleTimeString('pt-PT'));
+            timeRow = document.createElement('p');
+            timeRow.appendChild(day);
+            timeRow.appendChild(init);
+            timeRow.appendChild(finish);
+            // add yellow badge if is live
+            if (e.tipoEmissao == 'DIRETO') {
+                live = dce('span', {}, 'Direto');
+                live.classList.add('live');
+                timeRow.appendChild(live);
+            }
+            // event div container
+            div = dce('div', {id: 'x' + e.id});
+            div.classList.add('event');
+            div.appendChild(title);
+            div.appendChild(infoRow);
+            div.appendChild(timeRow);
+            // search for present time/div
+            if (now >= start && now < end) {
+                if (!presentFound) {
+                    a = dce('a', {id: 'present'});
+                    a.classList.add('anchor');
+                    addToMainContent(a);
+                    presentFound = true;
+                }
+                div.classList.add('live');
+            } else {
+                div.classList.add(e.tipoEmissao);
+            }
+            // add to main content
+            addToMainContent(div);
+        });
+        // re-populate filters
+        addOptions('sportsSelect');
+        addOptions('channelsSelect');
+    }
+
+    // fetch data from api
+    function fetchData() {
+        function apiURL() {
+            // calculate and return api url
+            const now = new Date();
+            now.setDate(now.getDate() + state.day);
+            const d = now.getDate();
+            const m = now.getMonth() + 1;
+            const y = now.getFullYear();
+            const initDate = '?dataInicio=' + d + '%2F' + m + '%2F' + y + '+00:00';
+            const endDate = '&dataFim=' + d + '%2F' + m + '%2F' + y + '+23:59';
+            const proxy = 'https://cors-anywhere.herokuapp.com/';
+            const uri = 'https://www.sporttv.pt/api/channels/epg';
+            const channels = '&idCanal=7133,727,728,729,5406,5422,7386';
+            const limit = '&numeroRegistos=600';
+            const media = '&tipoMedia=thumbnail';
+            return proxy + uri + initDate + endDate + channels + limit;
+        }
+
+        fetch(apiURL())
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (json) {
+                // concatenate new data to state data
+                state.data = state.data.concat(json);
+                // change button from 'A carregar...' to 'Próximo dia'
+                toggleLoadMoreButton();
+                // add navigation bar
+                addUI();
+                // render events
+                renderData(json);
+            })
+            .catch(function (err) {
+                console.warn('Something went wrong.', err);
+            });
+    }
+
+    fetchData();
+</script>
+</body>
+</html>
+

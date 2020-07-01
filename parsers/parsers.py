@@ -1,30 +1,30 @@
 from flask_restplus import reqparse
 
-from settings import DEFAULTS, ACTIONS, WALLET_PERMISSIONS,\
-    NEWS_BY, VOTE_OPTIONS, PROOF_TYPES
+from settings import DEFAULTS, ACTIONS,\
+    NEWS_BY, VOTE_OPTIONS, TX_TYPES
 from parsers import types
 
 
-def add_authentication(parser, location):
+def add_authentication(parser, location, required=True):
     parser.add_argument(
         "exp",
         location=location,
         type=types.timestamp,
-        required=True,
+        required=required,
         help="Expiration Timestamp"
     )
     parser.add_argument(
         "iss",
         location=location,
         type=types.wallet,
-        required=True,
+        required=required,
         help="Authenticated Issuer"
     )
     parser.add_argument(
         "Authorization",
         location="headers",
         type=types.ewt,
-        required=True,
+        required=required,
         help="EWT Authentication"
     )
     return parser
@@ -40,6 +40,13 @@ def parse_create():
         help="Community Name"
     )
     parser.add_argument(
+        "secret",
+        location="json",
+        type=bool,
+        default=False,
+        help="Secret Community"
+    )
+    parser.add_argument(
         "user_info",
         location="json",
         type=str,
@@ -52,14 +59,6 @@ def parse_create():
         type=types.user,
         required=True,
         help="Founder ID"
-    )
-    parser.add_argument(
-        "levels",
-        location="json",
-        type=int,
-        required=True,
-        default=0,
-        help="Community Levels"
     )
     parser.add_argument(
         "permissions",
@@ -196,14 +195,6 @@ def parse_wallets():
         required=True,
         help="User wallet"
     )
-    parser.add_argument(
-        "permission",
-        location="json",
-        choices=list(WALLET_PERMISSIONS),
-        default="vote",
-        required=True,
-        help="Wallet Permissions"
-    )
     return add_authentication(parser, "json")
 
 
@@ -246,7 +237,7 @@ def parse_reads():
         "community_id",
         location="args",
         type=types.community_id,
-        required=True,
+        required=False,
         help="Community ID"
     )
     parser.add_argument(
@@ -256,7 +247,7 @@ def parse_reads():
         required=False,
         help="Proposal ID"
     )
-    return add_authentication(parser, "args")
+    return add_authentication(parser, "args", False)
 
 
 def parse_audits():
@@ -271,7 +262,7 @@ def parse_audits():
     parser.add_argument(
         "type",
         location="args",
-        choices=list(PROOF_TYPES),
+        choices=list(TX_TYPES),
         required=False,
         help="Proof Type"
     )

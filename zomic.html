@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Zomic Community</title>
+    <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="author" content="zepcp"/>
+    <meta name="description" content="Zomic Community"/>
+    <meta name="keywords" content="zomic community"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+</head>
+
+<body>
+<style>
+    body {
+        margin: 0;
+        background-color: #f0f0f0;
+    }
+
+    div {
+        padding: 1em 5%;
+    }
+
+    #main_content {
+        margin-top: 5em;
+    }
+
+    #loading,
+    #load_more,
+    #footer {
+        text-align: center;
+    }
+
+    div.event {
+        border-bottom: 1px solid black;
+        background-color: white;
+    }
+
+    div.mainUI {
+        display: flex;
+        justify-content: space-between;
+        position: fixed;
+        top: 0;
+        background-color: lavender;
+        border-bottom: 1px solid black;
+        width: 80%;
+    }
+
+    div.event p:first-child {
+        font-weight: 700;
+    }
+
+    p {
+        margin: 0.3em 0;
+    }
+
+    span {
+        margin-right: 1em;
+        font-size: 0.8em;
+    }
+
+    span.open {
+        margin-left: 1em;
+        padding: 0 1em;
+        background-color: #ffda00; /* yellow */
+    }
+
+    span.approved {
+        margin-left: 1em;
+        padding: 0 1em;
+        background-color: #a5ff00; /* yellow */
+    }
+
+    span.rejected {
+        margin-left: 1em;
+        padding: 0 1em;
+        background-color: #ff5a00; /* yellow */
+    }
+
+</style>
+<div id="loading">
+    <p>Loading...</p>
+</div>
+<div id="navigation_bar"></div>
+<div id="main_content"></div>
+<div id="load_more"></div>
+<div id="footer">
+    <p><a href="https://zomic.ga">Zomic APIs</a></p>
+</div>
+<script>
+    // application state
+    const state = {
+        day: 0, // how many days have we fetched from the api
+        data: [], // store all events returned by api
+        filter: {} // if selected filter by
+    };
+
+    // util function, returns a DOM element, keep your code DRY
+    function dce(kind, params = {}, html = null) {
+        const e = document.createElement(kind);
+        const attrs = Object.keys(params);
+        attrs.map(attr => e.setAttribute(attr, params[attr]));
+        if (html) e.innerHTML = html;
+        return e;
+    }
+
+    // toggle text in load more button
+    function toggleLoadMoreButton() {
+        const b = document.getElementById('load_more_button');
+        if (b)
+            b.innerHTML = b.innerHTML == 'Load More' ? 'Loading...' : 'Load More';
+    }
+
+    // add navigation bar
+    function addUI() {
+        // util function, removes a element from main_content
+        function removeFromMainContent(el) {
+            const main = document.getElementById('main_content');
+            if (main) main.removeChild(el);
+        }
+
+        // removes all events from the DOM
+        function removeAllEvents() {
+            // remove <a> used to scroll to present time
+            const pr = document.getElementById('present');
+            if (pr) removeFromMainContent(pr);
+            // remove all events stored in state.data
+            state.data.map(e => {
+                const id = 'x' + e.id;
+                const el = document.getElementById(id);
+                if (el) removeFromMainContent(el);
+            });
+        }
+
+        // return a select dropdown element filtered
+        function filterSelect() {
+            // create DOM element
+            const select = dce('select', {id: 'filterSelect'});
+            // event handler
+            select.onchange = function (ev) {
+                // remove all events
+                removeAllEvents();
+                // reset sports select to default option
+                const other = document.getElementById('filterSelect');
+                other.value = 'all';
+                // update state.filter to reflect change
+                const channel = ev.target.value;
+                state.filter = channel == 'all' ? {} : {channel: channel};
+                // render data with new filter applied
+                renderData();
+            };
+            return select;
+        }
+
+        // add load more button at the end of events list
+        function addLoadMoreButton() {
+            const button = dce('button', {id: 'load_more_button'}, 'Load More');
+            button.onclick = () => {
+                state.day = state.day + 1;
+                toggleLoadMoreButton();
+                fetchData();
+            };
+            const loadMore = document.getElementById('load_more');
+            if (loadMore) loadMore.appendChild(button);
+        }
+
+        // return if UI already inserted
+        if (document.getElementById('goBack')) return null;
+        // remove loading message if still present
+        const loading = document.getElementById('loading');
+        if (loading) loading.remove();
+        // add 'Agora' link, which scrolls to live on tv now
+        const p = dce('p', {}, '<a id="goBack" href="#present">Back</a>');
+        // channel select wraped on a p for line height
+        const c_select = filterSelect();
+        const p_channels = dce('p');
+        p_channels.appendChild(c_select);
+        // div container, class mainUI
+        const div = dce('div');
+        div.classList.add('mainUI');
+        div.appendChild(p);
+        div.appendChild(p_channels);
+        // add div container to navigation bar
+        const navigationBar = document.getElementById('navigation_bar');
+        if (navigationBar) navigationBar.appendChild(div);
+        // add load more button
+        addLoadMoreButton();
+    }
+
+    // render data received
+    function renderData(data = state.data) {
+        // util function, add element to main_content
+        function addToMainContent(el) {
+            const main = document.getElementById('main_content');
+            if (main) main.appendChild(el);
+        }
+
+        // add default option to a select dropdown
+        function addDefaultOption(select, text) {
+            const option = dce('option');
+            option.text = text;
+            option.value = 'all';
+            select.add(option);
+        }
+
+        // add options to a select dropdown
+        function addOptions(id) {
+            // find select dropdown or return
+            const select = document.getElementById(id);
+            if (!select) return null;
+            // config object for sports and channel select
+            const cfg = {
+                filterSelect: {
+                    defaultText: 'Choose Filter',
+                    // use new Set to eliminate duplicates
+                    options: [...new Set(state.data.map(e => e.id))]
+                }
+            };
+            // save value to restore state at the end
+            const value = select.value;
+            // delete all options
+            select.innerHTML = '';
+            // add default option
+            addDefaultOption(select, cfg[id].defaultText);
+            // add all options
+            cfg[id].options.sort().map(o => {
+                const option = dce('option');
+                option.text = o;
+                select.add(option);
+            });
+            // restore value
+            select.value = value || 'all';
+        }
+
+        // render all events received
+        data.map(e => {
+            if (state.filter.id && e.id != state.filter.id) return;
+
+            title = dce('p', {}, e.id.link("https://zomic.ga") + ' - ' + e.title + ' (Community: ' + e.community_id + ')');
+            firstRow = document.createElement('p');
+            secondRow = document.createElement('p');
+
+            if (e.status == 'open') {
+                current_status = dce('span', {}, e.status.toUpperCase());
+            }
+            else{
+                current_status = dce('span', {}, e.status.toUpperCase() + ' (' + e.in_favor + '/' + e.against + ')');
+            }
+            current_status.classList.add(e.status);
+            type = dce('span', {}, 'Type: ' + e.type);
+            deadline = dce('span', {}, 'Deadline: ' + e.deadline);
+            approval_rate = dce('span', {}, 'Approval Required: ' + e.approval_rate.toString() + '%');
+
+            description = dce('span', {}, e.description);
+
+            firstRow.appendChild(current_status);
+            firstRow.appendChild(type);
+            firstRow.appendChild(deadline);
+            firstRow.appendChild(approval_rate);
+            secondRow.appendChild(description);
+
+            div = dce('div', {id: e.id});
+            div.classList.add('event');
+            div.appendChild(title);
+            div.appendChild(firstRow);
+            div.appendChild(secondRow);
+
+            // add to main content
+            addToMainContent(div);
+        });
+        addOptions('filterSelect');
+    }
+
+    // fetch data from api
+    function fetchData() {
+        function readAPI(endpoint) {
+            const proxy = 'https://cors-anywhere.herokuapp.com/';
+            const uri = 'https://zomic.ga/read/';
+            const community = '?community_id=test1234';
+            return proxy + uri + endpoint + community;
+        }
+
+        fetch(readAPI('proposals'))
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (json) {
+                // concatenate new data to state data
+                state.data = state.data.concat(json);
+                // Toggle 'Loading...' to 'Load More'
+                toggleLoadMoreButton();
+                // add navigation bar
+                addUI();
+                // render events
+                renderData(json);
+            })
+            .catch(function (err) {
+                console.warn('Something went wrong.', err);
+            });
+    } //end fetchData
+
+    fetchData();
+</script>
+</body>
+</html>

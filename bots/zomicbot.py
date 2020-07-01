@@ -69,7 +69,6 @@ def get_community(value):
     text = "Name: " + str(value.name)
     text += "\nInfo: " + str(value.required_info)
     text += "\nFounder: " + str(value.founder)
-    text += "\nLevels: " + str(value.levels)
     text += "\nPermissions: " + str(value.permissions)
     return text
 
